@@ -16,8 +16,8 @@ BINARY=$(BUILD)/esp8266_i2c
 flash: $(BINARY)-0x00000.bin
 	esptool.py  -p /dev/ttyUSB0 -b 460800 \
 	write_flash --flash_freq 80m --flash_mode qio \
-	0x00000 $(BINARY)-0x00000.bin \
-	0x10000 $(BINARY)-0x10000.bin \
+	0x000000 $(BINARY)-0x00000.bin \
+	0x010000 $(BINARY)-0x10000.bin \
 	0x3fc000 esp_init_data.bin
 
 .PHONY: link
@@ -27,7 +27,7 @@ $(BINARY)-0x00000.bin: clean $(BINARY)
 	esptool.py elf2image $(BINARY)
 
 $(BINARY): compile
-	$(CC) $(LDFLAGS) $(BUILD)/main.o $(BUILD)/blink.o $(LOADLIBES) $(LDLIBS) -o $(BINARY)
+	$(CC) $(LDFLAGS) $(OBJS) $(LOADLIBES) $(LDLIBS) -o $(BINARY)
 
 .PHONY: compile
 compile:
