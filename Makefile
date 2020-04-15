@@ -3,9 +3,11 @@ BUILD=./build
 SRC=./src
 INCLUDE=./include
 
+DRIVER_INCLUDE=../esp-open-sdk/ESP8266_NONOS_SDK-2.1.0-18-g61248df/driver_lib/include
+
 CC = xtensa-lx106-elf-gcc
-CFLAGS = -I$(INCLUDE) -mlongcalls -Wall
-LDLIBS = -nostdlib -Wl,--start-group -lmain -lnet80211 -lwpa -llwip -lpp -lphy -lc -Wl,--end-group -lgcc
+CFLAGS = -I$(INCLUDE) -I$(DRIVER_INCLUDE) -mlongcalls -Wall
+LDLIBS = -nostdlib -Wl,--start-group -lmain -lnet80211 -lwpa -llwip -lpp -lphy -lc -ldriver -Wl,--end-group -lgcc
 LDFLAGS = -Teagle.app.v6.ld
 
 SRCS=$(wildcard $(SRC)/*.c)
