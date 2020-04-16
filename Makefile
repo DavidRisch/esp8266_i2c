@@ -4,9 +4,10 @@ SRC=./src
 INCLUDE=./include
 
 DRIVER_INCLUDE=../esp-open-sdk/ESP8266_NONOS_SDK-2.1.0-18-g61248df/driver_lib/include
+DRIVER_SRC=../esp-open-sdk/ESP8266_NONOS_SDK-2.1.0-18-g61248df/driver_lib/driver # needed for hw_timer.c
 
 CC = xtensa-lx106-elf-gcc
-CFLAGS = -I$(INCLUDE) -I$(DRIVER_INCLUDE) -mlongcalls -Wall
+CFLAGS = -I$(INCLUDE) -I$(DRIVER_INCLUDE) -I$(DRIVER_SRC) -DICACHE_FLASH -mlongcalls -Wall
 LDLIBS = -nostdlib -Wl,--start-group -lmain -lnet80211 -lwpa -llwip -lpp -lphy -lc -ldriver -Wl,--end-group -lgcc
 LDFLAGS = -Teagle.app.v6.ld
 
