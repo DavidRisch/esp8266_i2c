@@ -1,12 +1,7 @@
 #include <ets_sys.h>
 #include <osapi.h>
 
-// workaround for problem in hw_timer.c, FRC1 is not used anyway
-#undef ETS_FRC1_INTR_ENABLE
-#define ETS_FRC1_INTR_ENABLE()
-
-#include <hw_timer.c>
-
+#include "hardware_timer.h"
 #include "gpio_util.h"
 #include "pins.h"
 #include "ring_buffer.h"
