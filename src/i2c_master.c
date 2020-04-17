@@ -1,13 +1,13 @@
-#include "ets_sys.h"
-#include "gpio.h"
-#include "os_type.h"
-#include "osapi.h"
+#include <ets_sys.h>
+#include <gpio.h>
+#include <os_type.h>
+#include <osapi.h>
 
+#include "hardware_timer.h"
 #include "gpio_util.h"
 #include "ring_buffer.h"
 #include "pins.h"
 
-os_timer_t i2c_master_timer;
 
 enum state {
     IDLE, GO_TO_IDLE, START, STOP, SEND_ADDRESS, SEND_DATA,
@@ -34,19 +34,24 @@ static bool wait_one_tick = false; //set to true when the master has to wait for
 // Step 1 and 3 are in the middle of the edges of the clock signal. Here the data pin is manipulated.
 static int timer_cycle = 0;
 
+void noop(void *arg) {
+    // For debugging
+}
+
 void i2c_master_timer_function(void *arg) {
     if (timer_cycle == 0) {
         pin_set_value(I2C_SCL, 0);
     } else if (timer_cycle == 1) { //set data pin to send data
         switch (i2c_master_state) {
             case IDLE:
-                if ( i2c_master_send_buffer.end != i2c_master_send_buffer.start || receive_counter > 0) {
+                if (i2c_master_send_buffer.end != i2c_master_send_buffer.start || receive_counter > 0) {
                     i2c_master_state = START;
                 }
                 break;
             case GO_TO_IDLE:
                 pin_set_output(I2C_SDA);
                 pin_set_value(I2C_SDA, 1);
+                i2c_master_state = IDLE;
                 break;
             case SEND_ADDRESS:
                 pin_set_value(I2C_SDA, (address & (1 << bit_counter)) > 0);
@@ -169,14 +174,21 @@ void i2c_master_timer_function(void *arg) {
         }
     }
     timer_cycle = (timer_cycle + 1) % 4;
+
+
+    if (i2c_master_send_buffer.end > 0 && i2c_master_send_buffer.start == i2c_master_send_buffer.end) {
+        os_printf_plus("Halting i2c, first buffer sent (for oscilloscope debugging)");
+        hw_timer_set_func((void (*)(void)) noop);
+    }
 }
+
 
 //creates master interface
 void i2c_master_init(int frequency) {
     pin_set_output(I2C_SCL);
-    os_timer_setfn(&i2c_master_timer, (os_timer_func_t *) i2c_master_timer_function, NULL);
-    int timer_interval = 1000000 / 2 / frequency;
-    os_timer_arm(&i2c_master_timer, timer_interval, 1);
+    hw_timer_init(NMI_SOURCE, 1);
+    hw_timer_arm(1000000 / 2 / frequency);
+    hw_timer_set_func((void (*)(void)) i2c_master_timer_function);
 }
 
 //reads from slave
