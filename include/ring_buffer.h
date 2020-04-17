@@ -9,8 +9,8 @@ typedef struct ring_buffer {
     volatile int end; // first index in buffer containing free space
 } ring_buffer_t;
 
-
-void ring_buffer_write(ring_buffer_t *ring_buffer, const char *input);
+// returns number of bytes written
+int ring_buffer_write(ring_buffer_t *ring_buffer, const char *input);
 
 void ring_buffer_read_line(ring_buffer_t *ring_buffer, char *output);
 

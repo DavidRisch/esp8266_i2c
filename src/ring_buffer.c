@@ -1,10 +1,12 @@
 #include "ring_buffer.h"
 
-void ring_buffer_write(ring_buffer_t *ring_buffer, const char *input) {
+// returns number of bytes written
+int ring_buffer_write(ring_buffer_t *ring_buffer, const char *input) {
     int i;
     for (i = 0; input[i] != '\0'; ++i) {
         ring_buffer->buffer[ring_buffer->end++] = input[i];
     }
+    return i;
 }
 
 void ring_buffer_read_line(ring_buffer_t *ring_buffer, char *output) {
