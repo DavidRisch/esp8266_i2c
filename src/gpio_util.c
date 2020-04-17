@@ -1,5 +1,6 @@
 
-#include "ets_sys.h"
+#include <ets_sys.h>
+#include <user_interface.h>
 
 void pin_set_output(int pin) {
     GPIO_REG_WRITE(GPIO_ENABLE_ADDRESS, GPIO_REG_READ(GPIO_ENABLE_ADDRESS) | (1 << pin));
@@ -27,4 +28,9 @@ int pin_get_current_value(int pin) {
 // pin must be input
 int pin_read_value(int pin) {
     return (GPIO_REG_READ(GPIO_IN_ADDRESS) & (1 << pin)) > 0;
+}
+
+// returns float in range [0, 1)
+float pin_read_analog() {
+    return ((float) system_adc_read()) / 1024.0f;
 }
