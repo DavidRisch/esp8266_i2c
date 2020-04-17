@@ -24,7 +24,7 @@ void ICACHE_FLASH_ATTR user_init() {
     system_init_done_cb(sdk_init_done_cb);
 
     //Example
-    i2c_master_init(1, 2, 20);
+    i2c_master_init(20);
     i2c_master_set_address(2);
     i2c_master_write("abc123");
     i2c_master_read(6);

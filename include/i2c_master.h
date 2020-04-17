@@ -2,7 +2,7 @@
 #define I2C_MASTER_H
 
 //creates master interface
-void i2c_master_init(int sda, int scl, int frequency);
+void i2c_master_init(int frequency);
 
 //reads from slave
 void i2c_master_read(int length);
