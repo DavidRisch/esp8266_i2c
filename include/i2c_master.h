@@ -1,6 +1,8 @@
 #ifndef I2C_MASTER_H
 #define I2C_MASTER_H
 
+void i2c_master_timer();
+
 //creates master interface
 void i2c_master_init(int frequency);
 
