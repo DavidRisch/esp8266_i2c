@@ -30,6 +30,10 @@ static int bit_counter = 0;
 
 static bool wait_one_tick = false; //set to true when the master has to wait for one tick, so that the slave can react
 
+static void setSdaOutputValue(int value) {
+    pin_set_value(I2C_SDA, value == 0); //inverts the bit because the external circuit inverts it again
+}
+
 // The timer cycles through 4 steps. Step 0 and 2 change the clock signal.
 // Step 1 and 3 are in the middle of the edges of the clock signal. Here the data pin is manipulated.
 static int timer_cycle = 0;
@@ -46,11 +50,11 @@ void i2c_master_timer() {
                 break;
             case GO_TO_IDLE:
                 pin_set_output(I2C_SDA);
-                pin_set_value(I2C_SDA, 1);
+                setSdaOutputValue(1);
                 i2c_master_state = IDLE;
                 break;
             case SEND_ADDRESS:
-                pin_set_value(I2C_SDA, (address & (1 << (6 - bit_counter))) > 0);
+                setSdaOutputValue((address & (1 << (6 - bit_counter))) > 0);
                 bit_counter++;
                 if (bit_counter == 7) {
                     i2c_master_state = SEND_READ_WRITE_BIT;
@@ -59,12 +63,12 @@ void i2c_master_timer() {
                 break;
             case SEND_READ_WRITE_BIT:
                 if (i2c_master_send_buffer.end != i2c_master_send_buffer.start) {
-                    pin_set_value(I2C_SDA, 0); //send write bit
+                    setSdaOutputValue(0); //send write bit
                     i2c_master_state = WAIT_FOR_ACKNOWLEDGE;
                     next_state = SEND_DATA;
                     wait_one_tick = true;
                 } else {
-                    pin_set_value(I2C_SDA, 1); //send read bit
+                    setSdaOutputValue(1); //send read bit
                     i2c_master_state = WAIT_FOR_ACKNOWLEDGE;
                     next_state = RECEIVE_DATA;
                     wait_one_tick = true;
@@ -81,7 +85,7 @@ void i2c_master_timer() {
                     }
                     resend_byte = false;
                 }
-                pin_set_value(I2C_SDA, (next_byte_to_send & (1 << (7 - bit_counter))) > 0);
+                setSdaOutputValue((next_byte_to_send & (1 << (7 - bit_counter))) > 0);
                 bit_counter++;
                 if (bit_counter == 8) {
                     bit_counter = 0;
@@ -102,19 +106,19 @@ void i2c_master_timer() {
                 break;
             case SEND_ACKNOWLEDGE:
                 pin_set_output(I2C_SDA);
-                pin_set_value(I2C_SDA, 1);
+                setSdaOutputValue(1);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
             case SEND_NO_ACKNOWLEDGE:
                 pin_set_output(I2C_SDA);
-                pin_set_value(I2C_SDA, 0);
+                setSdaOutputValue(0);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
             case STOP:
                 pin_set_output(I2C_SDA);
-                pin_set_value(I2C_SDA, 0);
+                setSdaOutputValue(0);
                 break;
             default:
                 break;
@@ -128,7 +132,7 @@ void i2c_master_timer() {
             switch (i2c_master_state) {
                 case START:
                     if (i2c_master_send_buffer.end != i2c_master_send_buffer.start || receive_counter > 0) {
-                        pin_set_value(I2C_SDA, 0); //create start condition
+                        setSdaOutputValue(0); //create start condition
                         i2c_master_state = SEND_ADDRESS;
                     }
                     break;
@@ -161,7 +165,7 @@ void i2c_master_timer() {
                 }
                     break;
                 case STOP:
-                    pin_set_value(I2C_SDA, 1); //create stop condition
+                    setSdaOutputValue(1); //create stop condition
                     i2c_master_state = GO_TO_IDLE;
                     break;
                 default:
@@ -198,4 +202,3 @@ void i2c_master_write(const char *data) {
 void i2c_master_set_address(int addresscode) {
     address = addresscode;
 }
-
