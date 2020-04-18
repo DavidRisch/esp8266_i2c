@@ -50,7 +50,7 @@ void i2c_master_timer() {
                 i2c_master_state = IDLE;
                 break;
             case SEND_ADDRESS:
-                pin_set_value(I2C_SDA, (address & (1 << bit_counter)) > 0);
+                pin_set_value(I2C_SDA, (address & (1 << (6 - bit_counter))) > 0);
                 bit_counter++;
                 if (bit_counter == 7) {
                     i2c_master_state = SEND_READ_WRITE_BIT;
@@ -81,7 +81,7 @@ void i2c_master_timer() {
                     }
                     resend_byte = false;
                 }
-                pin_set_value(I2C_SDA, (next_byte_to_send & (1 << bit_counter)) > 0);
+                pin_set_value(I2C_SDA, (next_byte_to_send & (1 << (7 - bit_counter))) > 0);
                 bit_counter++;
                 if (bit_counter == 8) {
                     bit_counter = 0;
