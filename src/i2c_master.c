@@ -8,6 +8,7 @@
 #include "ring_buffer.h"
 #include "pins.h"
 
+#define DEBUG_IGNORE_ACKNOWLEDGEBIT true
 
 enum state {
     IDLE, GO_TO_IDLE, START, STOP, SEND_ADDRESS, SEND_DATA,
@@ -138,7 +139,7 @@ void i2c_master_timer() {
                     break;
                 case WAIT_FOR_ACKNOWLEDGE: {
                     int acknowledge_bit = pin_read_value(I2C_SDA);
-                    if (acknowledge_bit) {
+                    if (acknowledge_bit || DEBUG_IGNORE_ACKNOWLEDGEBIT) {
                         i2c_master_state = next_state;
                     } else {
                         i2c_master_state = SEND_DATA;
