@@ -20,6 +20,12 @@ int pin_read_value(int pin);
 // returns float in range [0, 1)
 float pin_read_analog();
 
+// write with open collector + pull-up
+void pin_i2c_write(int pin, int value);
+
+// read with pull-up
+int pin_i2c_read(int pin);
+
 void gpio_util_init();
 
 #endif //ESP8266_I2C_GPIO_UTIL_H

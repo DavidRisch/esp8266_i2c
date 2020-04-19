@@ -2,6 +2,8 @@
 #include <ets_sys.h>
 #include <user_interface.h>
 
+#include "pins.h"
+
 void pin_set_output(int pin) {
     GPIO_REG_WRITE(GPIO_ENABLE_ADDRESS, GPIO_REG_READ(GPIO_ENABLE_ADDRESS) | (1u << pin));
 }
@@ -33,6 +35,25 @@ int pin_read_value(int pin) {
 // returns float in range [0, 1)
 float pin_read_analog() {
     return ((float) system_adc_read()) / 1024.0f;
+}
+
+// write with open drain + pull-up
+void pin_i2c_write(volatile uint32 pin, int value) {
+    if (value) {
+        // use pull-up to write a 1
+        pin_set_input(pin);
+        PIN_PULLUP_EN(io_mux_address[pin]);
+    } else {
+        // write 0
+        pin_set_output(pin);
+        pin_set_value(pin, 0);
+    }
+}
+
+// read with pull-up
+int pin_i2c_read(int pin) {
+    pin_i2c_write(pin, 1);
+    return pin_read_value(pin);
 }
 
 void gpio_util_init() {
