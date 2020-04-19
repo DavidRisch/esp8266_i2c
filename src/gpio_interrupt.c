@@ -10,15 +10,39 @@
 #include "i2c_master.h"
 
 bool uart_pin_state;
+bool sda_pin_state;
+bool scl_pin_state;
+extern bool is_master;
 
 void gpio_interrupt_edge() {
     // clear the interrupt status
     uint32 gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
     GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status);
 
+    // uart
     if (pin_read_value(PIN_UART_IN) != uart_pin_state) {
         uart_pin_state = !uart_pin_state;
         uart_edge();
+    }
+
+    // sda
+    if (pin_read_value(I2C_SDA) != sda_pin_state) {
+        sda_pin_state = !sda_pin_state;
+        if (is_master) {
+            // callback for master
+        } else {
+            // callback for slave
+        }
+    }
+
+    // scl
+    if (pin_read_value(I2C_SCL) != scl_pin_state) {
+        scl_pin_state = !scl_pin_state;
+        if (is_master) {
+            // callback for master
+        } else {
+            // callback for slave
+        }
     }
 }
 
@@ -31,6 +55,14 @@ void gpio_interrupt_init() {
     // uart
     uart_pin_state = pin_read_value(PIN_UART_IN);
     gpio_pin_intr_state_set(GPIO_ID_PIN(PIN_UART_IN), GPIO_PIN_INTR_ANYEDGE);
+
+    // sda
+    sda_pin_state = pin_read_value(I2C_SDA);
+    gpio_pin_intr_state_set(GPIO_ID_PIN(I2C_SDA), GPIO_PIN_INTR_ANYEDGE);
+
+    // scl
+    scl_pin_state = pin_read_value(I2C_SCL);
+    gpio_pin_intr_state_set(GPIO_ID_PIN(I2C_SCL), GPIO_PIN_INTR_ANYEDGE);
 
     ETS_GPIO_INTR_ATTACH(&gpio_interrupt_edge, 0);
 

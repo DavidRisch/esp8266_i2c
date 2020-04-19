@@ -1,13 +1,16 @@
-#include <user_interface.h>
+#include <c_types.h>
 #include <driver/uart.h>
-#include <osapi.h>
 #include <ets_sys.h>
+#include <osapi.h>
+#include <user_interface.h>
 
 #include "uart.h"
 #include "i2c_master.h"
 #include "gpio_util.h"
 #include "hardware_timer.h"
 #include "gpio_interrupt.h"
+
+bool is_master = true;
 
 void sdk_init_done_cb(void) {
     os_printf("sdk_init_done_cb\r\n");
