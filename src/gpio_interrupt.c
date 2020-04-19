@@ -46,6 +46,14 @@ void gpio_interrupt_edge() {
     }
 }
 
+void pin_enable_interrupt(int pin, GPIO_INT_TYPE state) {
+    gpio_pin_intr_state_set(GPIO_ID_PIN(pin), state);
+}
+
+void pin_disable_interrupt(int pin) {
+    gpio_pin_intr_state_set(GPIO_ID_PIN(pin), GPIO_PIN_INTR_DISABLE);
+}
+
 void gpio_interrupt_init() {
     int i;
     for (i = GPIO_ID_PIN0; i < GPIO_LAST_REGISTER_ID; ++i) {
