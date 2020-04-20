@@ -6,11 +6,12 @@
 
 #include "uart.h"
 #include "i2c_master.h"
+#include "i2c_slave.h"
 #include "gpio_util.h"
 #include "hardware_timer.h"
 #include "gpio_interrupt.h"
 
-bool is_master = true;
+extern bool is_master;
 
 void sdk_init_done_cb(void) {
     os_printf("sdk_init_done_cb\r\n");

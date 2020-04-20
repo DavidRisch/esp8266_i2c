@@ -25,24 +25,30 @@ void gpio_interrupt_edge() {
         uart_edge();
     }
 
-    // sda
-    if (pin_read_value(I2C_SDA) != sda_pin_state) {
-        sda_pin_state = !sda_pin_state;
-        if (is_master) {
-            // callback for master
-        } else {
-            // callback for slave
+    // callback for master
+    if (is_master) {
+        if (pin_read_value(I2C_SDA) != sda_pin_state) {
+            sda_pin_state = !sda_pin_state;
+        }
+
+        // scl
+        if (pin_read_value(I2C_SCL) != scl_pin_state) {
+            scl_pin_state = !scl_pin_state;
         }
     }
 
-    // scl
-    if (pin_read_value(I2C_SCL) != scl_pin_state) {
-        scl_pin_state = !scl_pin_state;
-        if (is_master) {
-            // callback for master
-        } else {
-            // callback for slave
+    // callback for slave
+    if (!is_master) {
+        if (pin_read_value(I2C_SDA) != sda_pin_state) {
+            sda_pin_state = !sda_pin_state;
         }
+
+        // scl
+        if (pin_read_value(I2C_SCL) != scl_pin_state) {
+            scl_pin_state = !scl_pin_state;
+        }
+
+        i2c_slave_handle(gpio_status);
     }
 }
 
