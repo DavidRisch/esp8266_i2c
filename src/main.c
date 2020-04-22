@@ -24,7 +24,7 @@ void sdk_init_done_cb(void) {
         i2c_master_init();
         i2c_master_set_address(2);
         i2c_master_write("abc");
-        i2c_master_read(6);
+        i2c_master_read(3);
     }
 
     hardware_timer_init();

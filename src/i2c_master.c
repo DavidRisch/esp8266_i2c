@@ -1,11 +1,10 @@
 #include <osapi.h>
 
-#include "hardware_timer.h"
 #include "gpio_util.h"
 #include "ring_buffer.h"
 #include "pins.h"
 
-#define DEBUG_IGNORE_ACKNOWLEDGEBIT true
+#define DEBUG_IGNORE_ACKNOWLEDGE_BIT true
 
 extern bool i2c_is_master;
 
@@ -73,6 +72,7 @@ void i2c_master_timer() {
                     if (!resend_byte) {
                         next_byte_to_send = i2c_master_send_buffer.buffer[i2c_master_send_buffer.start++];
                     }
+                    os_printf_plus("i2c_master sending byte: %c  %d\n", next_byte_to_send, next_byte_to_send);
                     resend_byte = false;
                 }
                 pin_i2c_write(I2C_SDA, (next_byte_to_send & (1 << (7 - bit_counter))) > 0);
@@ -125,7 +125,7 @@ void i2c_master_timer() {
                     break;
                 case WAIT_FOR_ACKNOWLEDGE: {
                     int acknowledge_bit = pin_i2c_read(I2C_SDA);
-                    if (acknowledge_bit || DEBUG_IGNORE_ACKNOWLEDGEBIT) {
+                    if (acknowledge_bit || DEBUG_IGNORE_ACKNOWLEDGE_BIT) {
                         i2c_master_state = next_state;
                     } else {
                         i2c_master_state = SEND_DATA;
@@ -161,12 +161,6 @@ void i2c_master_timer() {
         }
     }
     timer_cycle = (timer_cycle + 1) % 4;
-
-    //just for testing
-    if (i2c_master_send_buffer.end > 0 && i2c_master_send_buffer.start == i2c_master_send_buffer.end) {
-        os_printf_plus("Halting i2c, first buffer sent (for oscilloscope debugging)");
-        hardware_timer_stop();
-    }
 }
 
 
