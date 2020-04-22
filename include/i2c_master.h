@@ -4,7 +4,7 @@
 void i2c_master_timer();
 
 //creates master interface
-void i2c_master_init(int frequency);
+void i2c_master_init();
 
 //reads from slave
 void i2c_master_read(int length);

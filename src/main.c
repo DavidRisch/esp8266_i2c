@@ -18,7 +18,7 @@ void sdk_init_done_cb(void) {
 
     my_uart_init();
 
-    i2c_master_init(500);
+    i2c_master_init();
     i2c_master_set_address(2);
     i2c_master_write("abc");
     i2c_master_read(6);

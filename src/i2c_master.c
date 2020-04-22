@@ -13,10 +13,10 @@
 static bool is_master = true;
 
 enum state {
-    IDLE, GO_TO_IDLE, START, STOP, SEND_ADDRESS, SEND_DATA,
+    IDLE, START, STOP, SEND_ADDRESS, SEND_DATA,
     RECEIVE_DATA, SEND_READ_WRITE_BIT, WAIT_FOR_ACKNOWLEDGE, SEND_ACKNOWLEDGE, SEND_NO_ACKNOWLEDGE
 };
-enum state i2c_master_state = GO_TO_IDLE; //what the master is currently doing
+enum state i2c_master_state = IDLE; //what the master is currently doing
 static enum state next_state = IDLE; //what the master is doing next (only used after some states)
 
 ring_buffer_t i2c_master_receive_buffer = {.start=0, .end=0};
@@ -33,16 +33,12 @@ static int bit_counter = 0;
 
 static bool wait_one_tick = false; //set to true when the master has to wait for one tick, so that the slave can react
 
-static void setSdaOutputValue(int value) {
-    pin_set_value(I2C_SDA, value == 0); //inverts the bit because the external circuit inverts it again
-}
-
 // The timer cycles through 4 steps. Step 0 and 2 change the clock signal.
 // Step 1 and 3 are in the middle of the edges of the clock signal. Here the data pin is manipulated.
 static int timer_cycle = 0;
 
 void i2c_master_timer() {
-    if (timer_cycle == 0) {
+    if (timer_cycle == 0 && i2c_master_state != IDLE) {
         pin_set_value(I2C_SCL, 0);
     } else if (timer_cycle == 1) { //set data pin to send data
         switch (i2c_master_state) {
@@ -51,13 +47,8 @@ void i2c_master_timer() {
                     i2c_master_state = START;
                 }
                 break;
-            case GO_TO_IDLE:
-                pin_set_output(I2C_SDA);
-                setSdaOutputValue(1);
-                i2c_master_state = IDLE;
-                break;
             case SEND_ADDRESS:
-                setSdaOutputValue((address & (1 << (6 - bit_counter))) > 0);
+                pin_i2c_write(I2C_SDA, (address & (1 << (6 - bit_counter))) > 0);
                 bit_counter++;
                 if (bit_counter == 7) {
                     i2c_master_state = SEND_READ_WRITE_BIT;
@@ -66,29 +57,28 @@ void i2c_master_timer() {
                 break;
             case SEND_READ_WRITE_BIT:
                 if (i2c_master_send_buffer.end != i2c_master_send_buffer.start) {
-                    setSdaOutputValue(0); //send write bit
+                    pin_i2c_write(I2C_SDA, 0); //send write bit
                     i2c_master_state = WAIT_FOR_ACKNOWLEDGE;
                     next_state = SEND_DATA;
                     wait_one_tick = true;
                 } else {
-                    setSdaOutputValue(1); //send read bit
+                    pin_i2c_write(I2C_SDA, 1); //send read bit
                     i2c_master_state = WAIT_FOR_ACKNOWLEDGE;
                     next_state = RECEIVE_DATA;
                     wait_one_tick = true;
                 }
                 break;
             case WAIT_FOR_ACKNOWLEDGE:
-                pin_set_input(I2C_SDA);
+                pin_i2c_write(I2C_SDA, 0);
                 break;
             case SEND_DATA:
                 if (bit_counter == 0) {
-                    pin_set_output(I2C_SDA);
                     if (!resend_byte) {
                         next_byte_to_send = i2c_master_send_buffer.buffer[i2c_master_send_buffer.start++];
                     }
                     resend_byte = false;
                 }
-                setSdaOutputValue((next_byte_to_send & (1 << (7 - bit_counter))) > 0);
+                pin_i2c_write(I2C_SDA, (next_byte_to_send & (1 << (7 - bit_counter))) > 0);
                 bit_counter++;
                 if (bit_counter == 8) {
                     bit_counter = 0;
@@ -103,30 +93,27 @@ void i2c_master_timer() {
                 break;
             case RECEIVE_DATA:
                 if (bit_counter == 0) {
-                    pin_set_input(I2C_SDA);
+                    pin_i2c_write(I2C_SDA, 0);
                     current_receiving_byte = 0;
                 }
                 break;
             case SEND_ACKNOWLEDGE:
-                pin_set_output(I2C_SDA);
-                setSdaOutputValue(1);
+                pin_i2c_write(I2C_SDA, 1);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
             case SEND_NO_ACKNOWLEDGE:
-                pin_set_output(I2C_SDA);
-                setSdaOutputValue(0);
+                pin_i2c_write(I2C_SDA, 0);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
             case STOP:
-                pin_set_output(I2C_SDA);
-                setSdaOutputValue(0);
+                pin_i2c_write(I2C_SDA, 0);
                 break;
             default:
                 break;
         }
-    } else if (timer_cycle == 2) {
+    } else if (timer_cycle == 2 && i2c_master_state != IDLE) {
         pin_set_value(I2C_SCL, 1);
     } else if (timer_cycle == 3) { //set datapin to create start or stop condition/ read datapin
         if (wait_one_tick) {
@@ -135,12 +122,12 @@ void i2c_master_timer() {
             switch (i2c_master_state) {
                 case START:
                     if (i2c_master_send_buffer.end != i2c_master_send_buffer.start || receive_counter > 0) {
-                        setSdaOutputValue(0); //create start condition
+                        pin_i2c_write(I2C_SDA, 0); //create start condition
                         i2c_master_state = SEND_ADDRESS;
                     }
                     break;
                 case WAIT_FOR_ACKNOWLEDGE: {
-                    int acknowledge_bit = pin_read_value(I2C_SDA);
+                    int acknowledge_bit = pin_i2c_read(I2C_SDA);
                     if (acknowledge_bit || DEBUG_IGNORE_ACKNOWLEDGEBIT) {
                         i2c_master_state = next_state;
                     } else {
@@ -168,8 +155,8 @@ void i2c_master_timer() {
                 }
                     break;
                 case STOP:
-                    setSdaOutputValue(1); //create stop condition
-                    i2c_master_state = GO_TO_IDLE;
+                    pin_i2c_write(I2C_SDA, 1); //create stop condition
+                    i2c_master_state = IDLE;
                     break;
                 default:
                     break;
@@ -178,7 +165,7 @@ void i2c_master_timer() {
     }
     timer_cycle = (timer_cycle + 1) % 4;
 
-
+    //just for testing
     if (i2c_master_send_buffer.end > 0 && i2c_master_send_buffer.start == i2c_master_send_buffer.end) {
         os_printf_plus("Halting i2c, first buffer sent (for oscilloscope debugging)");
         hardware_timer_stop();
@@ -187,8 +174,10 @@ void i2c_master_timer() {
 
 
 //creates master interface
-void i2c_master_init(int frequency) {
+void i2c_master_init() {
     pin_set_output(I2C_SCL);
+    pin_set_value(I2C_SCL, 1);
+    pin_i2c_write(I2C_SDA, 1);
 }
 
 //reads from slave
