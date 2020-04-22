@@ -11,17 +11,21 @@
 #include "hardware_timer.h"
 #include "gpio_interrupt.h"
 
-extern bool is_master;
+bool i2c_is_master;
 
 void sdk_init_done_cb(void) {
     os_printf("sdk_init_done_cb\r\n");
 
     my_uart_init();
 
-    i2c_master_init();
-    i2c_master_set_address(2);
-    i2c_master_write("abc");
-    i2c_master_read(6);
+    i2c_is_master = true;
+
+    if (i2c_is_master) {
+        i2c_master_init();
+        i2c_master_set_address(2);
+        i2c_master_write("abc");
+        i2c_master_read(6);
+    }
 
     hardware_timer_init();
     gpio_interrupt_init();

@@ -1,13 +1,12 @@
-#include <ets_sys.h>
+#include "i2c_slave.h"
+
 #include <gpio.h>
-#include <os_type.h>
-#include <osapi.h>
 
 #include "gpio_interrupt.h"
 #include "gpio_util.h"
 #include "pins.h"
 
-static bool is_master = false;
+extern bool i2c_is_master;
 
 enum state {
     IDLE,
@@ -17,7 +16,7 @@ enum state {
     ACKNOWLEDGE,
     STOP
 };
-static enum state i2c_slave_state = START;
+static enum state i2c_slave_state = IDLE;
 
 static int i2c_slave_address = 0b0000000;
 
@@ -43,14 +42,12 @@ void i2c_slave_handle(uint32 gpio_status) {
                 addressed = (addressed | pin_i2c_read(I2C_SDA));
                 if (i2c_slave_check_address(addressed)) {
                     i2c_slave_state++;
-                }
-                else {
+                } else {
                     pin_disable_interrupt(I2C_SCL);
                     pin_enable_interrupt(I2C_SDA, GPIO_PIN_INTR_NEGEDGE);
                     i2c_slave_state = IDLE;
                 }
-            }
-            else {
+            } else {
                 addressed = (addressed | pin_i2c_read(I2C_SDA)) << 1;
             }
             break;
@@ -68,29 +65,31 @@ void i2c_slave_handle(uint32 gpio_status) {
         case ACKNOWLEDGE:
             bit_counter++;
             if (bit_counter == 2) {
-                if (((gpio_status >> I2C_SDA) & 1 == 1) && (pin_read_value(I2C_SCL) == 1)){
+                if ((((gpio_status >> I2C_SDA) & 1) == 1) && (pin_read_value(I2C_SCL) == 1)) {
                     pin_disable_interrupt(I2C_SCL);
                     pin_enable_interrupt(I2C_SDA, GPIO_PIN_INTR_NEGEDGE);
                     i2c_slave_state++;
-                }
-                else {
+                } else {
                     bit_counter = 0;
                     pin_disable_interrupt(I2C_SDA);
                     i2c_slave_state = DATA;
                 }
-            }
-            else {
+            } else {
                 pin_i2c_write(I2C_SDA, 1);
                 pin_enable_interrupt(I2C_SDA, GPIO_PIN_INTR_POSEDGE);
             }
             break;
+        case STOP:
+            // TODO: warning: enumeration value 'STOP' not handled in switch [-Wswitch]
+            break;
     }
 }
 
-int i2c_slave_write(const char* input) {
+int i2c_slave_write(const char *input) {
     int index = 0;
     while (input[index]) {
-        for (int bit = 8; bit > -1; bit--) {
+        int bit;
+        for (bit = 8; bit > -1; bit--) {
             int value = (input[index] >> bit) & 1;
             while (pin_get_current_value(I2C_SCL) == 1) {}
             pin_set_value(I2C_SDA, value);
@@ -110,6 +109,7 @@ int i2c_slave_check_address(int address) {
         return 0;
     }
 }
+
 void i2c_slave_set_address(int address) {
     i2c_slave_address = address;
 }

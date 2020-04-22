@@ -1,6 +1,3 @@
-#include <ets_sys.h>
-#include <gpio.h>
-#include <os_type.h>
 #include <osapi.h>
 
 #include "hardware_timer.h"
@@ -10,7 +7,7 @@
 
 #define DEBUG_IGNORE_ACKNOWLEDGEBIT true
 
-static bool is_master = true;
+extern bool i2c_is_master;
 
 enum state {
     IDLE, START, STOP, SEND_ADDRESS, SEND_DATA,

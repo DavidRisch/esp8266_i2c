@@ -8,11 +8,12 @@
 #include "pins.h"
 #include "uart.h"
 #include "i2c_master.h"
+#include "i2c_slave.h"
 
 bool uart_pin_state;
 bool sda_pin_state;
 bool scl_pin_state;
-extern bool is_master;
+extern bool i2c_is_master;
 
 void gpio_interrupt_edge() {
     // clear the interrupt status
@@ -26,7 +27,7 @@ void gpio_interrupt_edge() {
     }
 
     // callback for master
-    if (is_master) {
+    if (i2c_is_master) {
         if (pin_read_value(I2C_SDA) != sda_pin_state) {
             sda_pin_state = !sda_pin_state;
         }
@@ -38,7 +39,7 @@ void gpio_interrupt_edge() {
     }
 
     // callback for slave
-    if (!is_master) {
+    if (!i2c_is_master) {
         if (pin_read_value(I2C_SDA) != sda_pin_state) {
             sda_pin_state = !sda_pin_state;
         }
