@@ -65,7 +65,7 @@ void i2c_master_timer() {
                 }
                 break;
             case WAIT_FOR_ACKNOWLEDGE:
-                pin_i2c_write(I2C_SDA, 0);
+                pin_i2c_write(I2C_SDA, 1);
                 break;
             case SEND_DATA:
                 if (bit_counter == 0) {
