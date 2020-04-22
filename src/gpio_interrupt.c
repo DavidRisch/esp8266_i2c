@@ -4,12 +4,11 @@
 #include <ets_sys.h>
 #include <gpio.h>
 
+#include "role.h"
 #include "pins.h"
 #include "uart.h"
 #include "i2c_master.h"
 #include "i2c_slave.h"
-
-extern bool i2c_is_master;
 
 void gpio_interrupt_edge() {
     // clear the interrupt status
@@ -22,7 +21,7 @@ void gpio_interrupt_edge() {
     }
 
     // i2c
-    if (gpio_status & (1 << I2C_SDA) || gpio_status & (1 << I2C_SCL)) {
+    if (gpio_status & (1 << PIN_I2C_SDA) || gpio_status & (1 << PIN_I2C_SCL)) {
         if (i2c_is_master) {
             // callback for master
         } else {
@@ -49,8 +48,8 @@ void gpio_interrupt_init() {
     gpio_pin_intr_state_set(GPIO_ID_PIN(PIN_UART_IN), GPIO_PIN_INTR_ANYEDGE);
 
     // i2c
-    gpio_pin_intr_state_set(GPIO_ID_PIN(I2C_SDA), GPIO_PIN_INTR_ANYEDGE);
-    gpio_pin_intr_state_set(GPIO_ID_PIN(I2C_SCL), GPIO_PIN_INTR_ANYEDGE);
+    gpio_pin_intr_state_set(GPIO_ID_PIN(PIN_I2C_SDA), GPIO_PIN_INTR_ANYEDGE);
+    gpio_pin_intr_state_set(GPIO_ID_PIN(PIN_I2C_SCL), GPIO_PIN_INTR_ANYEDGE);
 
     ETS_GPIO_INTR_ATTACH(&gpio_interrupt_edge, 0);
 

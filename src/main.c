@@ -10,11 +10,12 @@
 #include "gpio_util.h"
 #include "hardware_timer.h"
 #include "gpio_interrupt.h"
-
-bool i2c_is_master;
+#include "role.h"
 
 void sdk_init_done_cb(void) {
-    os_printf("sdk_init_done_cb\r\n");
+    os_printf("sdk_init_done_cb\n");
+
+    role_init();
 
     my_uart_init();
 

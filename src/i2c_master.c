@@ -6,8 +6,6 @@
 
 #define DEBUG_IGNORE_ACKNOWLEDGE_BIT true
 
-extern bool i2c_is_master;
-
 enum state {
     IDLE, START, STOP, SEND_ADDRESS, SEND_DATA,
     RECEIVE_DATA, SEND_READ_WRITE_BIT, WAIT_FOR_ACKNOWLEDGE, SEND_ACKNOWLEDGE, SEND_NO_ACKNOWLEDGE
@@ -35,7 +33,7 @@ static int timer_cycle = 0;
 
 void i2c_master_timer() {
     if (timer_cycle == 0 && i2c_master_state != IDLE) {
-        pin_set_value(I2C_SCL, 0);
+        pin_set_value(PIN_I2C_SCL, 0);
     } else if (timer_cycle == 1) { //set data pin to send data
         switch (i2c_master_state) {
             case IDLE:
@@ -44,7 +42,7 @@ void i2c_master_timer() {
                 }
                 break;
             case SEND_ADDRESS:
-                pin_i2c_write(I2C_SDA, (address & (1 << (6 - bit_counter))) > 0);
+                pin_i2c_write(PIN_I2C_SDA, (address & (1 << (6 - bit_counter))) > 0);
                 bit_counter++;
                 if (bit_counter == 7) {
                     i2c_master_state = SEND_READ_WRITE_BIT;
@@ -53,19 +51,19 @@ void i2c_master_timer() {
                 break;
             case SEND_READ_WRITE_BIT:
                 if (i2c_master_send_buffer.end != i2c_master_send_buffer.start) {
-                    pin_i2c_write(I2C_SDA, 0); //send write bit
+                    pin_i2c_write(PIN_I2C_SDA, 0); //send write bit
                     i2c_master_state = WAIT_FOR_ACKNOWLEDGE;
                     next_state = SEND_DATA;
                     wait_one_tick = true;
                 } else {
-                    pin_i2c_write(I2C_SDA, 1); //send read bit
+                    pin_i2c_write(PIN_I2C_SDA, 1); //send read bit
                     i2c_master_state = WAIT_FOR_ACKNOWLEDGE;
                     next_state = RECEIVE_DATA;
                     wait_one_tick = true;
                 }
                 break;
             case WAIT_FOR_ACKNOWLEDGE:
-                pin_i2c_write(I2C_SDA, 1);
+                pin_i2c_write(PIN_I2C_SDA, 1);
                 break;
             case SEND_DATA:
                 if (bit_counter == 0) {
@@ -75,7 +73,7 @@ void i2c_master_timer() {
                     os_printf_plus("i2c_master sending byte: %c  %d\n", next_byte_to_send, next_byte_to_send);
                     resend_byte = false;
                 }
-                pin_i2c_write(I2C_SDA, (next_byte_to_send & (1 << (7 - bit_counter))) > 0);
+                pin_i2c_write(PIN_I2C_SDA, (next_byte_to_send & (1 << (7 - bit_counter))) > 0);
                 bit_counter++;
                 if (bit_counter == 8) {
                     bit_counter = 0;
@@ -90,28 +88,28 @@ void i2c_master_timer() {
                 break;
             case RECEIVE_DATA:
                 if (bit_counter == 0) {
-                    pin_i2c_write(I2C_SDA, 0);
+                    pin_i2c_write(PIN_I2C_SDA, 0);
                     current_receiving_byte = 0;
                 }
                 break;
             case SEND_ACKNOWLEDGE:
-                pin_i2c_write(I2C_SDA, 1);
+                pin_i2c_write(PIN_I2C_SDA, 1);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
             case SEND_NO_ACKNOWLEDGE:
-                pin_i2c_write(I2C_SDA, 0);
+                pin_i2c_write(PIN_I2C_SDA, 0);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
             case STOP:
-                pin_i2c_write(I2C_SDA, 0);
+                pin_i2c_write(PIN_I2C_SDA, 0);
                 break;
             default:
                 break;
         }
     } else if (timer_cycle == 2 && i2c_master_state != IDLE) {
-        pin_set_value(I2C_SCL, 1);
+        pin_set_value(PIN_I2C_SCL, 1);
     } else if (timer_cycle == 3) { //set datapin to create start or stop condition/ read datapin
         if (wait_one_tick) {
             wait_one_tick = false;
@@ -119,12 +117,12 @@ void i2c_master_timer() {
             switch (i2c_master_state) {
                 case START:
                     if (i2c_master_send_buffer.end != i2c_master_send_buffer.start || receive_counter > 0) {
-                        pin_i2c_write(I2C_SDA, 0); //create start condition
+                        pin_i2c_write(PIN_I2C_SDA, 0); //create start condition
                         i2c_master_state = SEND_ADDRESS;
                     }
                     break;
                 case WAIT_FOR_ACKNOWLEDGE: {
-                    int acknowledge_bit = pin_i2c_read(I2C_SDA);
+                    int acknowledge_bit = pin_i2c_read(PIN_I2C_SDA);
                     if (acknowledge_bit || DEBUG_IGNORE_ACKNOWLEDGE_BIT) {
                         i2c_master_state = next_state;
                     } else {
@@ -134,7 +132,7 @@ void i2c_master_timer() {
                 }
                     break;
                 case RECEIVE_DATA: {
-                    int received_bit = pin_read_value(I2C_SDA);
+                    int received_bit = pin_read_value(PIN_I2C_SDA);
                     current_receiving_byte = (current_receiving_byte << 1) | received_bit;
                     bit_counter++;
                     if (bit_counter == 8) {
@@ -152,7 +150,7 @@ void i2c_master_timer() {
                 }
                     break;
                 case STOP:
-                    pin_i2c_write(I2C_SDA, 1); //create stop condition
+                    pin_i2c_write(PIN_I2C_SDA, 1); //create stop condition
                     i2c_master_state = IDLE;
                     break;
                 default:
@@ -166,9 +164,9 @@ void i2c_master_timer() {
 
 //creates master interface
 void i2c_master_init() {
-    pin_set_output(I2C_SCL);
-    pin_set_value(I2C_SCL, 1);
-    pin_i2c_write(I2C_SDA, 1);
+    pin_set_output(PIN_I2C_SCL);
+    pin_set_value(PIN_I2C_SCL, 1);
+    pin_i2c_write(PIN_I2C_SDA, 1);
 }
 
 //reads from slave
