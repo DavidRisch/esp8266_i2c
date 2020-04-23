@@ -48,8 +48,12 @@ void gpio_interrupt_init() {
     gpio_pin_intr_state_set(GPIO_ID_PIN(PIN_UART_IN), GPIO_PIN_INTR_ANYEDGE);
 
     // i2c
-    gpio_pin_intr_state_set(GPIO_ID_PIN(PIN_I2C_SDA), GPIO_PIN_INTR_ANYEDGE);
-    gpio_pin_intr_state_set(GPIO_ID_PIN(PIN_I2C_SCL), GPIO_PIN_INTR_ANYEDGE);
+    if (i2c_is_master) {
+        // init for master
+    } else {
+        gpio_pin_intr_state_set(GPIO_ID_PIN(PIN_I2C_SDA), GPIO_PIN_INTR_NEGEDGE);
+    }
+
 
     ETS_GPIO_INTR_ATTACH(&gpio_interrupt_edge, 0);
 
