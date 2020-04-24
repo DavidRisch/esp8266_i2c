@@ -2,6 +2,8 @@
 
 #include <gpio.h>
 #include <osapi.h>
+#include <user_interface.h>
+#include <uart.h>
 
 #include "gpio_interrupt.h"
 #include "gpio_util.h"
@@ -31,6 +33,7 @@ static int bit_counter;
 static int addressed;
 static int read_write_bit;
 
+unsigned int i2c_edge_last_time = 0;
 
 void i2c_slave_handle_interrupt(uint32 gpio_status) {
 
@@ -39,8 +42,13 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
     bool scl_value = pin_read_value(PIN_I2C_SCL);
     bool scl_edge = gpio_status & (1 << PIN_I2C_SCL);
 
-    os_printf_plus("--i2c_s_int:  SDA: v%d e%d  SCL: v%d e%d  status: %d\n",
-                   sda_value, sda_edge, scl_value, scl_edge, gpio_status);
+    unsigned int time = system_get_time();
+    // number of bits since the last edge
+    int bit_number = (time - i2c_edge_last_time + UART_US_PER_BIT / 2) / UART_US_PER_BIT;
+    i2c_edge_last_time = time;
+
+    os_printf_plus("--i2c_s_int: SDA: v%d e%d  SCL: v%d e%d  t%d\n",
+                   sda_value, sda_edge, scl_value, scl_edge, bit_number);
 
     switch (i2c_slave_state) {
         case IDLE:
@@ -93,6 +101,26 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
         case DATA:
             if (bit_counter == 0) {
                 current_byte = 0;
+            } else if (bit_counter == 1) {
+                if (sda_edge) {
+                    // might be stop symbol
+                    if (scl_value) {
+                        // is stop symbol
+                        os_printf_plus("\t\t\t\t\tSTOP\n");
+                        i2c_slave_state = IDLE;
+                        // look for next start symbol
+                        pin_disable_interrupt(PIN_I2C_SCL);
+                        pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_NEGEDGE);
+                        return;
+                    } else {
+                        // not a stop signal, master is just setting the next data bit
+                        pin_disable_interrupt(PIN_I2C_SDA); // don't look for stop symbol during data byte
+                        return; // and ignore this interrupt
+                    };
+
+                }else{
+                    current_byte = 0;
+                }
             }
             bit_counter++;
 
@@ -134,8 +162,8 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
             pin_i2c_write(PIN_I2C_SDA, 1);
 
             i2c_slave_state = DATA;
-            pin_disable_interrupt(PIN_I2C_SDA);
-            pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE);
+            pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_POSEDGE); // stop symbol
+            pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE); // next data byte
 
             break;
 
