@@ -5,9 +5,9 @@
 
 void i2c_slave_handle(uint32 gpio_status);
 
-int i2c_slave_write(const char *input);
+void i2c_slave_write(const char *input);
 
-int i2c_slave_check_address(int address);
+bool i2c_slave_check_address(int address);
 
 void i2c_slave_set_address(int address);
 

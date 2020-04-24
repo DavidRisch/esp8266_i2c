@@ -15,9 +15,11 @@ SRCS=$(wildcard $(SRC)/*.c)
 OBJS=$(SRCS:$(SRC)/%.c=$(BUILD)/%.o)
 BINARY=$(BUILD)/esp8266_i2c
 
+DEV=/dev/ttyUSB0
+
 .PHONY: flash
 flash: $(BINARY)-0x00000.bin
-	esptool.py  -p /dev/ttyUSB0 -b 460800 \
+	esptool.py  -p $(DEV) -b 460800 \
 	write_flash --flash_freq 80m --flash_mode qio \
 	0x000000 $(BINARY)-0x00000.bin \
 	0x010000 $(BINARY)-0x10000.bin \

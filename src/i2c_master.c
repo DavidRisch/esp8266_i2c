@@ -31,9 +31,15 @@ static bool wait_one_tick = false; //set to true when the master has to wait for
 // Step 1 and 3 are in the middle of the edges of the clock signal. Here the data pin is manipulated.
 static int timer_cycle = 0;
 
+static int i2c_master_wait_counter = 0;
+
 void i2c_master_timer() {
+    if (i2c_master_wait_counter > 0) {
+        i2c_master_wait_counter--;
+        return;
+    }
     if (timer_cycle == 0 && i2c_master_state != IDLE) {
-        pin_set_value(PIN_I2C_SCL, 0);
+        pin_i2c_write(PIN_I2C_SCL, 0);
     } else if (timer_cycle == 1) { //set data pin to send data
         switch (i2c_master_state) {
             case IDLE:
@@ -109,7 +115,7 @@ void i2c_master_timer() {
                 break;
         }
     } else if (timer_cycle == 2 && i2c_master_state != IDLE) {
-        pin_set_value(PIN_I2C_SCL, 1);
+        pin_i2c_write(PIN_I2C_SCL, 1);
     } else if (timer_cycle == 3) { //set datapin to create start or stop condition/ read datapin
         if (wait_one_tick) {
             wait_one_tick = false;
@@ -119,6 +125,7 @@ void i2c_master_timer() {
                     if (i2c_master_send_buffer.end != i2c_master_send_buffer.start || receive_counter > 0) {
                         pin_i2c_write(PIN_I2C_SDA, 0); //create start condition
                         i2c_master_state = SEND_ADDRESS;
+                        i2c_master_wait_counter = 5;
                     }
                     break;
                 case WAIT_FOR_ACKNOWLEDGE: {
@@ -164,8 +171,7 @@ void i2c_master_timer() {
 
 //creates master interface
 void i2c_master_init() {
-    pin_set_output(PIN_I2C_SCL);
-    pin_set_value(PIN_I2C_SCL, 1);
+    pin_i2c_write(PIN_I2C_SCL, 1);
     pin_i2c_write(PIN_I2C_SDA, 1);
 }
 

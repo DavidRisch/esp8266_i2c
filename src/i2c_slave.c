@@ -1,6 +1,7 @@
 #include "i2c_slave.h"
 
 #include <gpio.h>
+#include <osapi.h>
 
 #include "gpio_interrupt.h"
 #include "gpio_util.h"
@@ -70,20 +71,25 @@ void i2c_slave_handle(uint32 gpio_status) {
             }
             bit_counter++;
             if (bit_counter == 8) {
+                os_printf_plus("DATA: bit_counter == 8 (%d): 0x%x %d %c\n", pin_i2c_read(PIN_I2C_SDA), current_byte,
+                               current_byte, current_byte);
                 if (read_write_bit) {
                     // WIP
                 } else {
                     current_byte = (current_byte | pin_i2c_read(PIN_I2C_SDA));
-                    ring_buffer_write(&i2c_slave_receive_buffer, &current_byte);
+                    i2c_slave_receive_buffer.buffer[i2c_slave_receive_buffer.end++] = current_byte;
+                    i2c_slave_receive_buffer.end %= RING_BUFFER_LENGTH;
                 }
                 bit_counter = 0;
                 i2c_slave_state++;
             } else {
-                // read_write_bit = 1 ==> write, read_write_bit = 0 ==> read
+                os_printf_plus("DATA: bit_counter %d (%d): 0x%x %d %c\n", bit_counter, pin_i2c_read(PIN_I2C_SDA),
+                               current_byte, current_byte, current_byte);
+                // read_write_bit = 0 ==> write, read_write_bit = 1 ==> read
                 if (read_write_bit) {
                     // WIP
                 } else {
-                    current_byte = (current_byte | pin_i2c_read(PIN_I2C_SDA)) << 1;
+                    current_byte = current_byte | (pin_i2c_read(PIN_I2C_SDA) << (7 - bit_counter));
                 }
             }
             break;
@@ -117,6 +123,7 @@ void i2c_slave_write(const char *data) {
 
 // returns true if address is identical to address of slave
 bool i2c_slave_check_address(int address) {
+    os_printf_plus("i2c_slave_check_address: %d\n", address);
     if (address == i2c_slave_address) {
         return true;
     } else {
@@ -130,4 +137,7 @@ void i2c_slave_set_address(int address) {
 }
 
 void i2c_slave_init() {
+    os_printf_plus("i2c_slave_init\n");
+    pin_i2c_write(PIN_I2C_SCL, 1);
+    pin_i2c_write(PIN_I2C_SDA, 1);
 }
