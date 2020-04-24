@@ -3,7 +3,7 @@
 
 #include <c_types.h>
 
-void i2c_slave_handle(uint32 gpio_status);
+void i2c_slave_handle_interrupt(uint32 gpio_status);
 
 void i2c_slave_write(const char *input);
 

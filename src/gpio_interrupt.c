@@ -25,7 +25,7 @@ void gpio_interrupt_edge() {
         if (i2c_is_master) {
             // callback for master
         } else {
-            i2c_slave_handle(gpio_status);
+            i2c_slave_handle_interrupt(gpio_status);
         }
     }
 }
