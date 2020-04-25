@@ -99,12 +99,12 @@ void i2c_master_timer() {
                 }
                 break;
             case SEND_ACKNOWLEDGE:
-                pin_i2c_write(PIN_I2C_SDA, 1);
+                pin_i2c_write(PIN_I2C_SDA, 0);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
             case SEND_NO_ACKNOWLEDGE:
-                pin_i2c_write(PIN_I2C_SDA, 0);
+                pin_i2c_write(PIN_I2C_SDA, 1);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
