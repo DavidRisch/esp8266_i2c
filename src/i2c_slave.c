@@ -193,14 +193,10 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
 
             break;
         case ACKNOWLEDGE_CHECK:
-<<<<<<< HEAD
             if (sda_value) {
                 i2c_slave_state = DATA;
                 pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_NEGEDGE); // next data byte
             } else {
-=======
-            if (!sda_value) {
->>>>>>> e5e87eb1ee51973db5bd8d7084b85fc4d86b78f5
                 i2c_slave_state = SEND_STOP;
                 pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE);
             }
