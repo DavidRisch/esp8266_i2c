@@ -34,7 +34,6 @@ ring_buffer_t i2c_slave_send_buffer = {.start = 0, .end = 0};
 static int bit_counter;
 static int addressed;
 static int read_write_bit;
-static bool resend = false;
 
 unsigned int i2c_edge_last_time = 0;
 
@@ -104,19 +103,14 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
         case DATA:
             if (bit_counter == 0) {
                 if (read_write_bit) {
-                    // setting next byte if last one should not be resend
-                    if (resend) {
-                        resend = false;
+                    // if buffer empty
+                    if (i2c_slave_send_buffer.start == i2c_slave_send_buffer.end) {
+                        // preparing for stop
+                        i2c_slave_state = SEND_STOP;
+                        pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE);
                     } else {
-                        // if buffer empty
-                        if (i2c_slave_send_buffer.start == i2c_slave_send_buffer.end) {
-                            // preparing for stop
-                            i2c_slave_state = SEND_STOP;
-                            pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE);
-                        } else {
-                            // read next byte from buffer
-                            current_byte = i2c_slave_send_buffer.buffer[i2c_slave_send_buffer.start++];
-                        }
+                        // read next byte from buffer
+                        current_byte = i2c_slave_send_buffer.buffer[i2c_slave_send_buffer.start++];
                     }
                 } else {
                     current_byte = 0;
@@ -199,11 +193,13 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
 
             break;
         case ACKNOWLEDGE_CHECK:
-            if (!sda_value) {
-                resend = true;
+            if (sda_value) {
+                i2c_slave_state = DATA;
+                pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_NEGEDGE); // next data byte
+            } else {
+                i2c_slave_state = SEND_STOP;
+                pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE);
             }
-            i2c_slave_state = DATA;
-            pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_NEGEDGE); // next data byte
 
             break;
         case SEND_STOP:
