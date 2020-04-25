@@ -20,6 +20,7 @@ enum state {
     WRITE_ACKNOWLEDGE_START,
     WRITE_ACKNOWLEDGE_END,
     CHECK_ACKNOWLEDGE,
+    WAIT_FOR_STOP,
     SEND_STOP
 };
 static enum state i2c_slave_state = IDLE;
@@ -202,8 +203,9 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
             if (sda_value) {
                 // NACK
                 os_printf_plus("\t\t\t\t\tNACK\n");
-                i2c_slave_state = SEND_STOP;
-                pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE);
+                i2c_slave_state = WAIT_FOR_STOP;
+                pin_disable_interrupt(PIN_I2C_SCL);
+                pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_POSEDGE); // stop symbol
             } else {
                 // ACK
                 os_printf_plus("\t\t\t\t\tACK\n");
@@ -211,6 +213,20 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
                 pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_NEGEDGE); // next data bit
             }
 
+            break;
+        case WAIT_FOR_STOP:
+            if (sda_edge) {
+                // might be stop symbol
+                if (scl_value) {
+                    // is stop symbol
+                    os_printf_plus("\t\t\t\t\tSTOP\n");
+                    i2c_slave_state = IDLE;
+                    // look for next start symbol
+                    pin_disable_interrupt(PIN_I2C_SCL);
+                    pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_NEGEDGE);
+                    return;
+                }
+            }
             break;
         case SEND_STOP:
             pin_i2c_write(PIN_I2C_SDA, 1);
