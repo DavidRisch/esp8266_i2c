@@ -19,6 +19,8 @@ enum state {
     DATA,
     ACKNOWLEDGE_START,
     ACKNOWLEDGE_END,
+    ACKNOWLEDGE_CHECK,
+    SEND_STOP
 };
 static enum state i2c_slave_state = IDLE;
 
@@ -32,6 +34,7 @@ ring_buffer_t i2c_slave_send_buffer = {.start = 0, .end = 0};
 static int bit_counter;
 static int addressed;
 static int read_write_bit;
+static bool resend = false;
 
 unsigned int i2c_edge_last_time = 0;
 
@@ -100,7 +103,24 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
             break;
         case DATA:
             if (bit_counter == 0) {
-                current_byte = 0;
+                if (read_write_bit) {
+                    // setting next byte if last one should not be resend
+                    if (resend) {
+                        resend = false;
+                    } else {
+                        // if buffer empty
+                        if (i2c_slave_send_buffer.start == i2c_slave_send_buffer.end) {
+                            // preparing for stop
+                            i2c_slave_state = SEND_STOP;
+                            pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE);
+                        } else {
+                            // read next byte from buffer
+                            current_byte = i2c_slave_send_buffer.buffer[i2c_slave_send_buffer.start++];
+                        }
+                    }
+                } else {
+                    current_byte = 0;
+                }
             } else if (bit_counter == 1) {
                 if (sda_edge) {
                     // might be stop symbol
@@ -126,7 +146,15 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
 
             // read_write_bit = 0 ==> write, read_write_bit = 1 ==> read
             if (read_write_bit) {
-                // WIP
+                // writing current bit of current char/byte
+                pin_i2c_write(PIN_I2C_SDA, (current_byte >> (8-bit_counter)) & 1);
+                if (bit_counter == 8) {
+                    bit_counter = 0;
+                    // preparing to check for acknowledge from master
+                    i2c_slave_state = ACKNOWLEDGE_CHECK;
+                    pin_disable_interrupt(PIN_I2C_SDA);
+                    pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE);
+                }
             } else {
 
                 current_byte = current_byte | (sda_value << (8 - bit_counter));
@@ -146,7 +174,6 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
                 }
             }
 
-
             break;
         case ACKNOWLEDGE_START:
             // send acknowledge
@@ -162,15 +189,37 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
             pin_i2c_write(PIN_I2C_SDA, 1);
 
             i2c_slave_state = DATA;
-            pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_POSEDGE); // stop symbol
-            pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE); // next data byte
+            if (read_write_bit) {
+                pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_NEGEDGE); // next data byte
+            }
+            else {
+                pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_POSEDGE); // stop symbol
+                pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE); // next data byte
+            }
 
             break;
+        case ACKNOWLEDGE_CHECK:
+            if (!sda_value) {
+                resend = true;
+            }
+            i2c_slave_state = DATA;
+            pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_NEGEDGE); // next data byte
 
+            break;
+        case SEND_STOP:
+            pin_i2c_write(PIN_I2C_SDA, 1);
+            i2c_slave_state = IDLE;
+            // look for next start symbol
+            pin_disable_interrupt(PIN_I2C_SCL);
+            pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_NEGEDGE);
+
+            break;
     }
     os_printf_plus("++i2c_s_int: SDA: %d   SCL: %d\n\n", pin_read_value(PIN_I2C_SDA), pin_read_value(PIN_I2C_SCL));
 }
 
+
+// write data to send into send buffer
 void i2c_slave_write(const char *data) {
     ring_buffer_write(&i2c_slave_send_buffer, data);
 }
