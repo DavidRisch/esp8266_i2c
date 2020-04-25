@@ -40,7 +40,7 @@ void i2c_master_timer() {
     }
     if (timer_cycle == 0 && i2c_master_state != IDLE) {
         pin_i2c_write(PIN_I2C_SCL, 0);
-    } else if (timer_cycle == 1) { //set data pin to send data
+    } else if (timer_cycle == 1) { //set SDA to send data
         switch (i2c_master_state) {
             case IDLE:
                 if (i2c_master_send_buffer.end != i2c_master_send_buffer.start || receive_counter > 0) {
@@ -94,29 +94,32 @@ void i2c_master_timer() {
                 break;
             case RECEIVE_DATA:
                 if (bit_counter == 0) {
-                    pin_i2c_write(PIN_I2C_SDA, 0);
+                    pin_i2c_write(PIN_I2C_SDA, 1);
                     current_receiving_byte = 0;
                 }
                 break;
             case SEND_ACKNOWLEDGE:
+                os_printf_plus("i2c_master sending ACK\n");
                 pin_i2c_write(PIN_I2C_SDA, 0);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
             case SEND_NO_ACKNOWLEDGE:
+                os_printf_plus("i2c_master sending NACK\n");
                 pin_i2c_write(PIN_I2C_SDA, 1);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
             case STOP:
                 pin_i2c_write(PIN_I2C_SDA, 0);
+                i2c_master_wait_counter = 5;
                 break;
             default:
                 break;
         }
     } else if (timer_cycle == 2 && i2c_master_state != IDLE) {
         pin_i2c_write(PIN_I2C_SCL, 1);
-    } else if (timer_cycle == 3) { //set datapin to create start or stop condition/ read datapin
+    } else if (timer_cycle == 3) { //set SDA to create start or stop condition or read from SDA
         if (wait_one_tick) {
             wait_one_tick = false;
         } else {
@@ -139,10 +142,13 @@ void i2c_master_timer() {
                 }
                     break;
                 case RECEIVE_DATA: {
-                    int received_bit = pin_read_value(PIN_I2C_SDA);
-                    current_receiving_byte = (current_receiving_byte << 1) | received_bit;
+                    int received_bit = pin_i2c_read(PIN_I2C_SDA);
+                    current_receiving_byte = current_receiving_byte | (received_bit << (7 - bit_counter));
+                    os_printf_plus("i2c_master received bit %d: %d\n", bit_counter, received_bit);
                     bit_counter++;
                     if (bit_counter == 8) {
+                        os_printf_plus("i2c_master received byte: %d  %c\n", current_receiving_byte,
+                                       current_receiving_byte);
                         bit_counter = 0;
                         ring_buffer_write(&i2c_master_receive_buffer, &current_receiving_byte);
                         receive_counter--;
@@ -186,6 +192,6 @@ void i2c_master_write(const char *data) {
 }
 
 //sets the address where messages will be send to (Default address: 0000000)
-void i2c_master_set_address(int addresscode) {
+void i2c_master_set_target_address(int addresscode) {
     address = addresscode;
 }

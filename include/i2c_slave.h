@@ -9,7 +9,7 @@ void i2c_slave_write(const char *input);
 
 bool i2c_slave_check_address(int address);
 
-void i2c_slave_set_address(int address);
+void i2c_slave_set_own_address(int address);
 
 void i2c_slave_init();
 

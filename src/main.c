@@ -21,12 +21,13 @@ void sdk_init_done_cb(void) {
 
     if (i2c_is_master) {
         i2c_master_init();
-        i2c_master_set_address(11);
-        i2c_master_write("abc");
-        //i2c_master_read(3);
+        i2c_master_set_target_address(11);
+        // i2c_master_write("abc");
+        i2c_master_read(3);
     } else {
         i2c_slave_init();
-        i2c_slave_set_address(11);
+        i2c_slave_set_own_address(11);
+        i2c_slave_write("012345");
     }
 
     hardware_timer_init();
