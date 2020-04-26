@@ -14,11 +14,11 @@ enum state i2c_master_state = IDLE; //what the master is currently doing
 static enum state next_state = IDLE; //what the master is doing next (only used after some states)
 
 ring_buffer_t i2c_master_receive_buffer = {.start=0, .end=0};
-static char next_byte_to_send = 0;
+static uint8 next_byte_to_send = 0;
 
 ring_buffer_t i2c_master_send_buffer = {.start=0, .end=0};
 static int receive_counter = 0; //counts how many bytes need to be received
-static char current_receiving_byte = 0;
+static uint8 current_receiving_byte = 0;
 
 static int address = 0; //address of the slave with which the master is communicating with
 
@@ -130,8 +130,10 @@ void i2c_master_timer() {
                 case WAIT_FOR_ACKNOWLEDGE: {
                     int acknowledge_bit = pin_i2c_read(PIN_I2C_SDA);
                     if (acknowledge_bit == 0 || DEBUG_IGNORE_ACKNOWLEDGE_BIT) {
+                        os_printf_plus("i2c_master received ACK\n");
                         i2c_master_state = next_state;
                     } else {
+                        os_printf_plus("i2c_master received NACK\n");
                         i2c_master_state = STOP; //abort transmission
                     }
                 }
@@ -171,7 +173,7 @@ void i2c_master_timer() {
 
 
 //creates master interface
-void i2c_master_init() {
+void ICACHE_FLASH_ATTR i2c_master_init() {
     pin_i2c_write(PIN_I2C_SCL, 1);
     pin_i2c_write(PIN_I2C_SDA, 1);
 }
@@ -182,8 +184,15 @@ void i2c_master_read(int length) {
 }
 
 //writes to slave
-void i2c_master_write(const char *data) {
+void i2c_master_write(const uint8 *data) {
+    os_printf("i2c_master_write: %s\n", data);
     ring_buffer_write(&i2c_master_send_buffer, data);
+}
+
+//writes to slave
+void i2c_master_write_byte(const uint8 data) {
+    os_printf("i2c_master_write_byte: %d %c\n", data, data);
+    i2c_master_send_buffer.buffer[i2c_master_send_buffer.end++] = data;
 }
 
 //sets the address where messages will be send to (Default address: 0000000)

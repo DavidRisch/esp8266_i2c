@@ -1,9 +1,10 @@
 #ifndef I2C_MASTER_H
 #define I2C_MASTER_H
+
 #include "ring_buffer.h"
 
-ring_buffer_t i2c_master_send_buffer;
-ring_buffer_t i2c_master_receive_buffer;
+extern ring_buffer_t i2c_master_send_buffer;
+extern ring_buffer_t i2c_master_receive_buffer;
 
 void i2c_master_timer();
 
@@ -14,7 +15,10 @@ void i2c_master_init();
 void i2c_master_read(int length);
 
 //writes to slave
-void i2c_master_write(const char *data);
+void i2c_master_write(const uint8 *data);
+
+//writes to slave
+void i2c_master_write_byte(const uint8 data);
 
 //sets the address where messages will be send to (Default address: 0000000)
 void i2c_master_set_target_address(int address);

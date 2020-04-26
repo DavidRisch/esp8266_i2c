@@ -4,12 +4,12 @@
 #include <c_types.h>
 #include "ring_buffer.h"
 
-ring_buffer_t i2c_slave_receive_buffer;
-ring_buffer_t i2c_slave_send_buffer;
+extern ring_buffer_t i2c_slave_receive_buffer;
+extern ring_buffer_t i2c_slave_send_buffer;
 
 void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values);
 
-void i2c_slave_write(const char *input);
+void i2c_slave_write(const uint8 *input);
 
 bool i2c_slave_check_address(int address);
 

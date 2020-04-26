@@ -56,7 +56,7 @@ int pin_i2c_read(int pin) {
     return pin_read_value(pin);
 }
 
-void gpio_util_init() {
+void ICACHE_FLASH_ATTR gpio_util_init() {
     // This functions contains one call to PIN_FUNC_SELECT for each pin that can technically be used as a gpio.
     // The comment matches the name printed on the silkscreen of the board.
 

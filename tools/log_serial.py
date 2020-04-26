@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import sys
+
 import serial
 
 dev = '/dev/ttyUSB0'

@@ -89,6 +89,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
                 // comparing received address with own address
                 // returning to IDLE state if not equal
                 if (i2c_slave_check_address(addressed)) {
+                    os_printf_plus("i2c_slave received own address: %d\n", addressed);
                     i2c_slave_state++;
                 } else {
                     pin_disable_interrupt(PIN_I2C_SCL);
@@ -132,6 +133,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
                     // might be stop symbol
                     if (scl_value) {
                         // is stop symbol
+                        os_printf("i2c_slave received stop symbol\n");
 #ifdef I2C_SLAVE_DETAILED_DEBUG
                         os_printf_plus("\t\t\t\t\tSTOP\n");
 #endif
@@ -145,8 +147,8 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
                         pin_disable_interrupt(PIN_I2C_SDA); // don't look for stop symbol during data byte
                         return; // and ignore this interrupt
                     };
-
                 }
+                pin_disable_interrupt(PIN_I2C_SDA);
             }
             bit_counter++;
 
@@ -167,7 +169,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
                                (current_byte >> (8 - bit_counter)) & 1,
                                current_byte, current_byte);
 #endif
-                // writing current bit of current char/byte
+                // writing current bit of current byte
                 pin_i2c_write(PIN_I2C_SDA, (current_byte >> (8 - bit_counter)) & 1);
             } else {
 
@@ -272,7 +274,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
 
 
 // write data to send into send buffer
-void i2c_slave_write(const char *data) {
+void i2c_slave_write(const uint8 *data) {
     ring_buffer_write(&i2c_slave_send_buffer, data);
 }
 

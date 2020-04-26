@@ -7,7 +7,7 @@
 bool i2c_is_master;
 bool remote_is_control;
 
-void role_init() {
+void ICACHE_FLASH_ATTR role_init() {
     pin_set_input(PIN_ROLE_SELECT);
     PIN_PULLUP_EN(io_mux_address[PIN_ROLE_SELECT]);
 

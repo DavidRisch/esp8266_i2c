@@ -14,7 +14,7 @@
 #include "gpio_interrupt.h"
 #include "role.h"
 
-void sdk_init_done_cb(void) {
+void ICACHE_FLASH_ATTR sdk_init_done_cb(void) {
     os_printf("sdk_init_done_cb\n");
 
     role_init();

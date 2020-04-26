@@ -56,7 +56,7 @@ void gpio_interrupt_edge() {
 
 
     // uart
-    if (gpio_status & (1 << PIN_UART_IN)) {
+    if (!remote_is_control && gpio_status & (1 << PIN_UART_IN)) {
         uart_edge();
     }
 
@@ -68,14 +68,17 @@ void gpio_interrupt_edge() {
             i2c_slave_handle_interrupt(gpio_status, gpio_values);
         }
     }
+
+    // control
+    if (remote_is_control &&
+        (gpio_status & (1 << PIN_REMOTE_CONTROL_LEFT_BUTTON) || gpio_status & (1 << PIN_REMOTE_CONTROL_RIGHT_BUTTON))) {
+        remote_control_handle_interrupt(gpio_status);
+    }
 }
 
 void pin_enable_interrupt(int pin, GPIO_INT_TYPE state) {
     pin_interrupt_states[pin] = state;
     gpio_pin_intr_state_set(GPIO_ID_PIN(pin), state);
-    if (remote_is_control) {
-        remote_control_handle_interrupt();
-    }
 }
 
 void pin_disable_interrupt(int pin) {
@@ -83,20 +86,25 @@ void pin_disable_interrupt(int pin) {
     gpio_pin_intr_state_set(GPIO_ID_PIN(pin), GPIO_PIN_INTR_DISABLE);
 }
 
-void gpio_interrupt_init() {
+void ICACHE_FLASH_ATTR gpio_interrupt_init() {
     int i;
     for (i = GPIO_ID_PIN0; i < GPIO_LAST_REGISTER_ID; ++i) {
-        gpio_pin_intr_state_set(i, GPIO_PIN_INTR_DISABLE);
+        pin_disable_interrupt(i);
     }
 
     // uart
-    gpio_pin_intr_state_set(GPIO_ID_PIN(PIN_UART_IN), GPIO_PIN_INTR_ANYEDGE);
+    pin_enable_interrupt(GPIO_ID_PIN(PIN_UART_IN), GPIO_PIN_INTR_ANYEDGE);
 
     // i2c
     if (i2c_is_master) {
         // init for master
     } else {
-        gpio_pin_intr_state_set(GPIO_ID_PIN(PIN_I2C_SDA), GPIO_PIN_INTR_NEGEDGE);
+        pin_enable_interrupt(GPIO_ID_PIN(PIN_I2C_SDA), GPIO_PIN_INTR_NEGEDGE);
+    }
+
+    if (remote_is_control) {
+        pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_LEFT_BUTTON), GPIO_PIN_INTR_POSEDGE);
+        pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_RIGHT_BUTTON), GPIO_PIN_INTR_POSEDGE);
     }
 
 

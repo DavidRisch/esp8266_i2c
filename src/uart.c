@@ -9,7 +9,7 @@
 #include "ring_buffer.h"
 
 // value of the current word
-char uart_receive_binary_word = 0;
+uint8 uart_receive_binary_word = 0;
 
 ring_buffer_t uart_receive_buffer = {.start=0, .end=0};
 ring_buffer_t uart_send_buffer = {.start=0, .end=0};
@@ -49,7 +49,7 @@ void uart_timer() {
 
     if (uart_receive_buffer.start != uart_receive_buffer.end &&
         uart_receive_buffer.buffer[uart_receive_buffer.end - 1] == '\n') {
-        ring_buffer_read_line(&uart_receive_buffer, uart_output_str);
+        ring_buffer_read_line(&uart_receive_buffer, (uint8 *) uart_output_str);
         if (uart_output_str[0] != '\0') {
             os_printf("uart_received: %s\n", uart_output_str);
         }
@@ -93,7 +93,7 @@ void uart_edge() {
             receive_bit_state = BIT_STOP;
             // This relies on detecting the start of BIT_STOP. If the last byte of a transmission were to end with a 1,
             // there wouldn't be a edge at the start of BIT_STOP, the frame would only be saved at the start of the next
-            // transmission. This problem does not occur for values <0x80, this included all ascii characters.
+            // transmission. This problem does not occur for values <0x80, this includes all ascii characters.
         }
     } else if (receive_bit_state == BIT_STOP && previous_value) {
         receive_bit_state = BIT_START;
@@ -108,7 +108,7 @@ void my_uart_init() {
     pin_set_output(PIN_UART_OUT);
     pin_set_value(PIN_UART_OUT, 1);
 
-    ring_buffer_write(&uart_send_buffer, "\nM114\nM105\nM105\nM105\n");
+    ring_buffer_write(&uart_send_buffer, (uint8 *) "\nM114\nM105\nM105\nM105\n");
 }
 
 
