@@ -4,7 +4,7 @@
 #include "ring_buffer.h"
 #include "pins.h"
 
-#define DEBUG_IGNORE_ACKNOWLEDGE_BIT true
+#define DEBUG_IGNORE_ACKNOWLEDGE_BIT false
 
 enum state {
     IDLE, START, STOP, SEND_ADDRESS, SEND_DATA,
@@ -15,7 +15,6 @@ static enum state next_state = IDLE; //what the master is doing next (only used 
 
 ring_buffer_t i2c_master_receive_buffer = {.start=0, .end=0};
 static char next_byte_to_send = 0;
-static bool resend_byte = false; //set to true when there is no acknowledge from the slave
 
 ring_buffer_t i2c_master_send_buffer = {.start=0, .end=0};
 static int receive_counter = 0; //counts how many bytes need to be received
@@ -73,11 +72,8 @@ void i2c_master_timer() {
                 break;
             case SEND_DATA:
                 if (bit_counter == 0) {
-                    if (!resend_byte) {
-                        next_byte_to_send = i2c_master_send_buffer.buffer[i2c_master_send_buffer.start++];
-                    }
+                    next_byte_to_send = i2c_master_send_buffer.buffer[i2c_master_send_buffer.start++];
                     os_printf_plus("i2c_master sending byte: %c  %d\n", next_byte_to_send, next_byte_to_send);
-                    resend_byte = false;
                 }
                 pin_i2c_write(PIN_I2C_SDA, (next_byte_to_send & (1 << (7 - bit_counter))) > 0);
                 bit_counter++;
@@ -133,11 +129,10 @@ void i2c_master_timer() {
                     break;
                 case WAIT_FOR_ACKNOWLEDGE: {
                     int acknowledge_bit = pin_i2c_read(PIN_I2C_SDA);
-                    if (acknowledge_bit || DEBUG_IGNORE_ACKNOWLEDGE_BIT) {
+                    if (acknowledge_bit == 0 || DEBUG_IGNORE_ACKNOWLEDGE_BIT) {
                         i2c_master_state = next_state;
                     } else {
-                        i2c_master_state = SEND_DATA;
-                        resend_byte = true;
+                        i2c_master_state = STOP; //abort transmission
                     }
                 }
                     break;
