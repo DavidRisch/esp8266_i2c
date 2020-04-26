@@ -38,11 +38,11 @@ static int write_to_master; // true if sending data to master, false if receivin
 
 unsigned int i2c_edge_last_time = 0;
 
-void i2c_slave_handle_interrupt(uint32 gpio_status) {
+void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
 
-    bool sda_value = pin_read_value(PIN_I2C_SDA);
+    bool sda_value = gpio_values & (1 << PIN_I2C_SDA);
     bool sda_edge = gpio_status & (1 << PIN_I2C_SDA);
-    bool scl_value = pin_read_value(PIN_I2C_SCL);
+    bool scl_value = gpio_values & (1 << PIN_I2C_SCL);
     bool scl_edge = gpio_status & (1 << PIN_I2C_SCL);
 
     unsigned int time = system_get_time();
@@ -191,7 +191,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status) {
             if (write_to_master) {
                 pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_NEGEDGE); // next data bit
                 i2c_slave_handle_interrupt(
-                        gpio_status); // the current interrupt must also be used to set the first data bit
+                        gpio_status, gpio_values); // the current interrupt must also be used to set the first data bit
             } else {
                 pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_POSEDGE); // stop symbol
                 pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE); // next data bit
