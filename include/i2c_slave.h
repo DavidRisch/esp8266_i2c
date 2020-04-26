@@ -7,7 +7,7 @@
 ring_buffer_t i2c_slave_receive_buffer;
 ring_buffer_t i2c_slave_send_buffer;
 
-void i2c_slave_handle_interrupt(uint32 gpio_status);
+void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values);
 
 void i2c_slave_write(const char *input);
 
