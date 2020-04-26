@@ -7,6 +7,8 @@
 #include "uart.h"
 #include "i2c_master.h"
 #include "i2c_slave.h"
+#include "remote_control.h"
+#include "remote_receiver.h"
 #include "gpio_util.h"
 #include "hardware_timer.h"
 #include "gpio_interrupt.h"
@@ -22,12 +24,18 @@ void sdk_init_done_cb(void) {
     if (i2c_is_master) {
         i2c_master_init();
         i2c_master_set_target_address(11);
-        // i2c_master_write("abc");
-        i2c_master_read(3);
+        //i2c_master_write("abc");
+        //i2c_master_read(3);
     } else {
         i2c_slave_init();
         i2c_slave_set_own_address(11);
-        i2c_slave_write("012345");
+        //i2c_slave_write("012345");
+    }
+
+    if (remote_is_control) {
+        remote_control_init();
+    } else {
+        remote_receiver_init();
     }
 
     hardware_timer_init();

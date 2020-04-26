@@ -9,10 +9,19 @@ void ets_isr_unmask(uint32 unmask);
 
 #include "uart.h"
 #include "i2c_master.h"
+#include "remote_control.h"
+#include "remote_receiver.h"
+#include "role.h"
 
 void hardware_timer_interrupt(void *arg) {
     uart_timer();
     i2c_master_timer();
+    if (remote_is_control) {
+        remote_control_timer();
+    } else {
+        remote_receiver_timer();
+    }
+
 }
 
 void hardware_timer_init() {

@@ -5,6 +5,7 @@
 #include "pins.h"
 
 bool i2c_is_master;
+bool remote_is_control;
 
 void role_init() {
     pin_set_input(PIN_ROLE_SELECT);
@@ -13,8 +14,10 @@ void role_init() {
     if (pin_read_value(PIN_ROLE_SELECT)) {
         os_printf("role_init: A\n");
         i2c_is_master = true;
+        remote_is_control = true;
     } else {
         os_printf("role_init: B\n");
         i2c_is_master = false;
+        remote_is_control = false;
     }
 }

@@ -1,5 +1,9 @@
 #ifndef I2C_MASTER_H
 #define I2C_MASTER_H
+#include "ring_buffer.h"
+
+ring_buffer_t i2c_master_send_buffer;
+ring_buffer_t i2c_master_receive_buffer;
 
 void i2c_master_timer();
 

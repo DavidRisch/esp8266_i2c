@@ -9,6 +9,7 @@
 #include "uart.h"
 #include "i2c_master.h"
 #include "i2c_slave.h"
+#include "remote_control.h"
 
 void gpio_interrupt_edge() {
     // clear the interrupt status
@@ -32,6 +33,9 @@ void gpio_interrupt_edge() {
 
 void pin_enable_interrupt(int pin, GPIO_INT_TYPE state) {
     gpio_pin_intr_state_set(GPIO_ID_PIN(pin), state);
+    if (remote_is_control) {
+        remote_control_handle_interrupt();
+    }
 }
 
 void pin_disable_interrupt(int pin) {
