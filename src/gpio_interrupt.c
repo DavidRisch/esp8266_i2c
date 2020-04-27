@@ -11,7 +11,7 @@
 #include "i2c_slave.h"
 #include "remote_control.h"
 
-// #define GPIO_INTERRUPT_DETAILED_DEBUG
+ #define GPIO_INTERRUPT_DETAILED_DEBUG
 #ifdef GPIO_INTERRUPT_DETAILED_DEBUG
 #include <osapi.h>
 #endif
@@ -94,6 +94,7 @@ void ICACHE_FLASH_ATTR gpio_interrupt_init() {
     // uart
     pin_enable_interrupt(GPIO_ID_PIN(PIN_UART_IN), GPIO_PIN_INTR_ANYEDGE);
 
+    /*
     // i2c
     if (i2c_is_master) {
         // init for master
@@ -106,6 +107,7 @@ void ICACHE_FLASH_ATTR gpio_interrupt_init() {
         pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_BUTTON_RIGHT), GPIO_PIN_INTR_POSEDGE);
         pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_BUTTON_HOME), GPIO_PIN_INTR_POSEDGE);
     }
+    */
 
 
     ETS_GPIO_INTR_ATTACH(&gpio_interrupt_edge, 0);

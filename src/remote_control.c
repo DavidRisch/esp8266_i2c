@@ -39,7 +39,7 @@ static void ICACHE_FLASH_ATTR send_message() {
 
     uint32 time = system_get_time();
 
-    if ((time - last_speed_command) > 2000 * 1000) {
+    if ((time - last_speed_command) > 10000 * 1000) {
         float speed = pin_read_analog();
         os_printf("remote_control COMMAND_SPEED: %d.%d\n", (int) (speed / 1),
                   ((int) (speed * 100)) % 100);
@@ -51,7 +51,7 @@ static void ICACHE_FLASH_ATTR send_message() {
         i2c_master_write_byte(0x00);
     }
 
-    if ((time - last_status_command) > 4000 * 1000) {
+    if (false && (time - last_status_command) > 4000 * 1000) {
         os_printf("remote_control COMMAND_STATUS\n");
         last_status_command = time;
         i2c_master_write_byte(0xFF);
@@ -72,7 +72,10 @@ void ICACHE_FLASH_ATTR remote_control_init() {
     PIN_PULLUP_EN(io_mux_address[PIN_REMOTE_CONTROL_BUTTON_HOME]);
 
     pin_set_output(PIN_REMOTE_CONTROL_LED_READY);
-    pin_set_output(PIN_REMOTE_CONTROL_LED_RED);
+    pin_set_value(PIN_REMOTE_CONTROL_LED_READY, 1);
+    pin_set_output(PIN_REMOTE_CONTROL_LED_ERROR);
+    pin_set_value(PIN_REMOTE_CONTROL_LED_ERROR, 1);
+
 
     uint32 time = system_get_time();
     int i;

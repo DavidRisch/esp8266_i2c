@@ -4,7 +4,7 @@
 #include "ring_buffer.h"
 #include "pins.h"
 
-#define DEBUG_IGNORE_ACKNOWLEDGE_BIT false
+#define DEBUG_IGNORE_ACKNOWLEDGE_BIT true
 
 enum state {
     IDLE, START, STOP, SEND_ADDRESS, SEND_DATA,
@@ -193,6 +193,7 @@ void ICACHE_FLASH_ATTR i2c_master_write(const uint8 *data) {
 void ICACHE_FLASH_ATTR i2c_master_write_byte(const uint8 data) {
     os_printf("i2c_master_write_byte: %d %c\n", data, data);
     i2c_master_send_buffer.buffer[i2c_master_send_buffer.end++] = data;
+    i2c_master_send_buffer.end %= RING_BUFFER_LENGTH;
 }
 
 //sets the address where messages will be send to (Default address: 0000000)

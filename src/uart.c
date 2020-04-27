@@ -43,6 +43,7 @@ void uart_timer() {
         uart_send_counter++;
     } else if (uart_send_counter == 0 && uart_send_buffer.end != uart_send_buffer.start) {
         // start bit
+        os_printf("uart_timer start\n");
         pin_set_value(PIN_UART_OUT, 0);
         uart_send_counter = 1;
     }
@@ -68,6 +69,8 @@ void uart_edge() {
     // this function is triggered after an edge, the value before th edge must be the inverse of current_value
     bool previous_value = !current_value;
 
+    os_printf("uart_edge current_value: %d\n", current_value);
+
     unsigned int time = system_get_time();
     // number of bits since the last edge
     int bit_number = (time - edge_last_time + UART_US_PER_BIT / 2) / UART_US_PER_BIT;
@@ -88,6 +91,7 @@ void uart_edge() {
         }
         receive_bit_state += bit_number;
         if (receive_bit_state > BIT_7) { // data word is complete
+            os_printf("uart_received byte: %c   %d\n", uart_receive_binary_word, uart_receive_binary_word);
             uart_receive_buffer.buffer[uart_receive_buffer.end++] = uart_receive_binary_word;
             uart_receive_buffer.end %= RING_BUFFER_LENGTH;
             receive_bit_state = BIT_STOP;
