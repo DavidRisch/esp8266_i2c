@@ -62,9 +62,7 @@ void gpio_interrupt_edge() {
 
     // i2c
     if (gpio_status & (1 << PIN_I2C_SDA) || gpio_status & (1 << PIN_I2C_SCL)) {
-        if (i2c_is_master) {
-            // callback for master
-        } else {
+        if (!i2c_is_master) {
             i2c_slave_handle_interrupt(gpio_status, gpio_values);
         }
     }

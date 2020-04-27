@@ -23,8 +23,7 @@ enum state {
     WRITE_ACKNOWLEDGE_START,
     WRITE_ACKNOWLEDGE_END,
     CHECK_ACKNOWLEDGE,
-    WAIT_FOR_STOP,
-    SEND_STOP
+    WAIT_FOR_STOP
 };
 static enum state i2c_slave_state = IDLE;
 
@@ -39,7 +38,9 @@ static int bit_counter;
 static int addressed;
 static int write_to_master; // true if sending data to master, false if receiving
 
-unsigned int i2c_edge_last_time = 0;
+#ifdef I2C_SLAVE_DETAILED_DEBUG
+    unsigned int i2c_edge_last_time = 0;
+#endif
 
 void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
 
@@ -118,8 +119,9 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
                     // if buffer empty
                     if (i2c_slave_send_buffer.start == i2c_slave_send_buffer.end) {
                         // preparing for stop
-                        i2c_slave_state = SEND_STOP;
-                        pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_POSEDGE);
+                        i2c_slave_state = WAIT_FOR_STOP;
+                        pin_disable_interrupt(PIN_I2C_SCL);
+                        pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_POSEDGE); // stop symbol
                     } else {
                         // read next byte from buffer
                         current_byte = i2c_slave_send_buffer.buffer[i2c_slave_send_buffer.start++];
@@ -257,14 +259,6 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
                     return;
                 }
             }
-            break;
-        case SEND_STOP:
-            pin_i2c_write(PIN_I2C_SDA, 1);
-            i2c_slave_state = IDLE;
-            // look for next start symbol
-            pin_disable_interrupt(PIN_I2C_SCL);
-            pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_NEGEDGE);
-
             break;
     }
 #ifdef I2C_SLAVE_DETAILED_DEBUG
