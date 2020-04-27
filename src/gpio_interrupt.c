@@ -71,7 +71,8 @@ void gpio_interrupt_edge() {
 
     // control
     if (remote_is_control &&
-        (gpio_status & (1 << PIN_REMOTE_CONTROL_LEFT_BUTTON) || gpio_status & (1 << PIN_REMOTE_CONTROL_RIGHT_BUTTON))) {
+        (gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_LEFT) || gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_RIGHT) ||
+         gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_HOME))) {
         remote_control_handle_interrupt(gpio_status);
     }
 }
@@ -103,8 +104,9 @@ void ICACHE_FLASH_ATTR gpio_interrupt_init() {
     }
 
     if (remote_is_control) {
-        pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_LEFT_BUTTON), GPIO_PIN_INTR_POSEDGE);
-        pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_RIGHT_BUTTON), GPIO_PIN_INTR_POSEDGE);
+        pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_BUTTON_LEFT), GPIO_PIN_INTR_POSEDGE);
+        pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_BUTTON_RIGHT), GPIO_PIN_INTR_POSEDGE);
+        pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_BUTTON_HOME), GPIO_PIN_INTR_POSEDGE);
     }
 
 

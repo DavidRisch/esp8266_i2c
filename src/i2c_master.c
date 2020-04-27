@@ -184,18 +184,18 @@ void i2c_master_read(int length) {
 }
 
 //writes to slave
-void i2c_master_write(const uint8 *data) {
+void ICACHE_FLASH_ATTR i2c_master_write(const uint8 *data) {
     os_printf("i2c_master_write: %s\n", data);
     ring_buffer_write(&i2c_master_send_buffer, data);
 }
 
 //writes to slave
-void i2c_master_write_byte(const uint8 data) {
+void ICACHE_FLASH_ATTR i2c_master_write_byte(const uint8 data) {
     os_printf("i2c_master_write_byte: %d %c\n", data, data);
     i2c_master_send_buffer.buffer[i2c_master_send_buffer.end++] = data;
 }
 
 //sets the address where messages will be send to (Default address: 0000000)
-void i2c_master_set_target_address(int addresscode) {
+void ICACHE_FLASH_ATTR i2c_master_set_target_address(int addresscode) {
     address = addresscode;
 }

@@ -274,7 +274,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
 
 
 // write data to send into send buffer
-void i2c_slave_write(const uint8 *data) {
+void ICACHE_FLASH_ATTR i2c_slave_write(const uint8 *data) {
     ring_buffer_write(&i2c_slave_send_buffer, data);
 }
 
@@ -291,11 +291,11 @@ bool i2c_slave_check_address(int address) {
 }
 
 // sets address of slave (default: 0000000)
-void i2c_slave_set_own_address(int address) {
+void ICACHE_FLASH_ATTR i2c_slave_set_own_address(int address) {
     i2c_slave_address = address;
 }
 
-void i2c_slave_init() {
+void ICACHE_FLASH_ATTR i2c_slave_init() {
     os_printf_plus("i2c_slave_init\n");
     pin_i2c_write(PIN_I2C_SCL, 1);
     pin_i2c_write(PIN_I2C_SDA, 1);
