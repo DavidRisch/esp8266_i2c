@@ -72,7 +72,7 @@ void i2c_master_timer() {
                 break;
             case SEND_DATA:
                 if (bit_counter == 0) {
-                    next_byte_to_send = i2c_master_send_buffer.buffer[i2c_master_send_buffer.start++];
+                    next_byte_to_send = ring_buffer_read_one_byte(&i2c_master_send_buffer);
                     os_printf_plus("i2c_master sending byte: %c  %d\n", next_byte_to_send, next_byte_to_send);
                 }
                 pin_i2c_write(PIN_I2C_SDA, (next_byte_to_send & (1 << (7 - bit_counter))) > 0);
@@ -147,7 +147,7 @@ void i2c_master_timer() {
                         os_printf_plus("i2c_master received byte: %d  %c\n", current_receiving_byte,
                                        current_receiving_byte);
                         bit_counter = 0;
-                        ring_buffer_write(&i2c_master_receive_buffer, &current_receiving_byte);
+                        ring_buffer_write_one_byte(&i2c_master_receive_buffer, current_receiving_byte);
                         receive_counter--;
                         if (receive_counter > 0) {
                             i2c_master_state = SEND_ACKNOWLEDGE;
@@ -192,8 +192,7 @@ void ICACHE_FLASH_ATTR i2c_master_write(const uint8 *data) {
 //writes to slave
 void ICACHE_FLASH_ATTR i2c_master_write_byte(const uint8 data) {
     os_printf("i2c_master_write_byte: %d %c\n", data, data);
-    i2c_master_send_buffer.buffer[i2c_master_send_buffer.end++] = data;
-    i2c_master_send_buffer.end %= RING_BUFFER_LENGTH;
+    ring_buffer_write_one_byte(&i2c_master_send_buffer, data);
 }
 
 //sets the address where messages will be send to (Default address: 0000000)

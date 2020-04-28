@@ -15,10 +15,10 @@ void i2c_master_init();
 void i2c_master_read(int length);
 
 //writes to slave
-void i2c_master_write(const uint8 *data);
+void i2c_master_write(uint8 *data);
 
 //writes to slave
-void i2c_master_write_byte(const uint8 data);
+void i2c_master_write_byte(uint8 data);
 
 //sets the address where messages will be send to (Default address: 0000000)
 void i2c_master_set_target_address(int address);

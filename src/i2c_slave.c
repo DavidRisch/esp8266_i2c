@@ -124,7 +124,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
                         pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_POSEDGE); // stop symbol
                     } else {
                         // read next byte from buffer
-                        current_byte = i2c_slave_send_buffer.buffer[i2c_slave_send_buffer.start++];
+                        current_byte = ring_buffer_read_one_byte(&i2c_slave_send_buffer);
                         os_printf_plus("i2c_slave sending byte: %c  %d\n", current_byte, current_byte);
                     }
                 } else {
@@ -186,8 +186,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
                     os_printf_plus("\t\t\t\t\tcurrent_byte: %c 0x%x %d\n", current_byte, current_byte, current_byte);
 #endif
                     os_printf_plus("i2c_slave received byte: %c  %d\n", current_byte, current_byte);
-                    i2c_slave_receive_buffer.buffer[i2c_slave_receive_buffer.end++] = current_byte;
-                    i2c_slave_receive_buffer.end %= RING_BUFFER_LENGTH;
+                    ring_buffer_write_one_byte(&i2c_slave_receive_buffer, current_byte);
 
                     bit_counter = 0;
 
