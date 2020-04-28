@@ -22,3 +22,7 @@ esp8266_A GPIO00/D3 <-- Button "Home"  (normally open, connected to GND)
 esp8266_A GPIO13/D7 --> Led "Ready"    (through resistor)
 esp8266_A GPIO15/D8 --> Led "Ready"    (through resistor)
 ```
+
+## Explanation of the I²C protocol
+
+![alt text]https://github.com/DavidRisch/esp8266_i2c/blob/master/i2c_protocol.png?raw=true)
