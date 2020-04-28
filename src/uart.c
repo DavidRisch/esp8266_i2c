@@ -37,8 +37,7 @@ void uart_timer() {
             uart_send_counter++;
         } else if (position >= 20) {
             // end of frame
-            uart_send_buffer.start++;
-            uart_receive_buffer.start %= RING_BUFFER_LENGTH;
+            ring_buffer_increment_start(&uart_send_buffer);
             uart_send_counter = 0;
         } else {
             uart_send_counter++;
@@ -86,8 +85,7 @@ void uart_edge() {
         receive_bit_state += bit_number;
         if (receive_bit_state > BIT_7) { // data word is complete
             os_printf("uart_received byte: %c   %d\n", uart_receive_binary_word, uart_receive_binary_word);
-            uart_receive_buffer.buffer[uart_receive_buffer.end++] = uart_receive_binary_word;
-            uart_receive_buffer.end %= RING_BUFFER_LENGTH;
+            ring_buffer_write_one_byte(&uart_receive_buffer, uart_receive_binary_word);
             receive_bit_state = BIT_STOP;
             // This relies on detecting the start of BIT_STOP. If the last byte of a transmission were to end with a 1,
             // there wouldn't be a edge at the start of BIT_STOP, the frame would only be saved at the start of the next

@@ -114,10 +114,14 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
             if (bit_counter == 0) {
                 if (write_to_master) {
                     if (i2c_slave_send_buffer.start == i2c_slave_send_buffer.end) { // if buffer empty
+#ifdef I2C_SLAVE_DETAILED_DEBUG
+                        os_printf_plus("\t\t\t\t\tbuffer is empty %d  %d\n", i2c_slave_send_buffer.start, i2c_slave_send_buffer.end);
+#endif
                         // preparing for stop symbol from master
                         i2c_slave_state = WAIT_FOR_STOP;
                         pin_disable_interrupt(PIN_I2C_SCL);
                         pin_enable_interrupt(PIN_I2C_SDA, GPIO_PIN_INTR_POSEDGE); // stop symbol
+                        return;
                     } else {
                         // read next byte from buffer
                         current_byte = ring_buffer_read_one_byte(&i2c_slave_send_buffer);
@@ -187,7 +191,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
 
                     bit_counter = 0;
 
-                    // preperation for sending acknowledge
+                    // preparation for sending acknowledge
                     i2c_slave_state = WRITE_ACKNOWLEDGE_START;
                     pin_disable_interrupt(PIN_I2C_SDA);
                     pin_enable_interrupt(PIN_I2C_SCL, GPIO_PIN_INTR_NEGEDGE);

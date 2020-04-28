@@ -8,14 +8,24 @@
 
 #define INTERVAL_BUTTON 200 // in ms
 
-static int target_position = 10;
+static int target_position = 100;
 static int last_sent_position = 0;
+static int received_position = -1;
 static bool request_home = false;
 
 uint32 last_status_command = 0;
 uint32 last_speed_command = 0;
+bool read_this_cycle = false;
 
 uint32 button_last_times[2];
+
+void set_ready_led() {
+    pin_set_value(PIN_REMOTE_CONTROL_LED_READY, target_position == received_position);
+}
+
+void set_error_led(bool state) {
+    pin_set_value(PIN_REMOTE_CONTROL_LED_ERROR, state);
+}
 
 static void ICACHE_FLASH_ATTR send_message() {
 
@@ -40,7 +50,7 @@ static void ICACHE_FLASH_ATTR send_message() {
     }
 
     uint32 time = system_get_time();
-/*
+
     if ((time - last_speed_command) > 10000 * 1000) {
         float speed = pin_read_analog();
         os_printf("remote_control COMMAND_SPEED: %d.%d\n", (int) (speed / 1),
@@ -52,18 +62,49 @@ static void ICACHE_FLASH_ATTR send_message() {
         i2c_master_write_byte(speed_byte);
         i2c_master_write_byte(0x00);
     }
-    */
 
-    if ((time - last_status_command) > 8000 * 1000) {
+
+    if ((time - last_status_command) > 1000 * 1000) {
         os_printf("remote_control COMMAND_STATUS\n");
-        //i2c_master_read(3);
         last_status_command = time;
         i2c_master_write_byte(0xFF);
         i2c_master_write_byte(COMMAND_STATUS);
         i2c_master_write_byte(0x00);
         i2c_master_write_byte(0x00);
+        read_this_cycle = false;
     }
 
+    if (!read_this_cycle && (time - last_status_command) > 500 * 1000) {
+        os_printf("remote_control READ\n");
+        i2c_master_read(3);
+        read_this_cycle = true;
+    }
+
+}
+
+static void ICACHE_FLASH_ATTR read_message() {
+    if (ring_buffer_length(&i2c_master_receive_buffer) >= 3) {
+        os_printf_plus("read_message: %d %d     %d\n", i2c_master_receive_buffer.start, i2c_master_receive_buffer.end,
+                       i2c_master_receive_buffer.buffer[0]);
+
+        uint8 byte = ring_buffer_read_one_byte(&i2c_master_receive_buffer);
+        if (byte != 0xFE) {
+            os_printf_plus("read_message: expected 0xFE, got 0x%x  %d\n", byte, byte);
+            return;
+        }
+
+        received_position = ring_buffer_read_one_byte(&i2c_master_receive_buffer);
+
+        os_printf_plus("read_message: received_position %d\n", received_position);
+
+        byte = ring_buffer_read_one_byte(&i2c_master_receive_buffer);
+        if (byte != 0xFD) {
+            os_printf_plus("read_message: expected 0xFD, got 0x%x  %d\n", byte, byte);
+            return;
+        }
+
+        set_ready_led();
+    }
 }
 
 void ICACHE_FLASH_ATTR remote_control_init() {
@@ -87,6 +128,9 @@ void ICACHE_FLASH_ATTR remote_control_init() {
     for (i = 0; i < 2; i++) {
         button_last_times[i] = time;
     }
+
+    set_ready_led();
+    set_error_led(false);
 }
 
 void remote_control_timer() {
@@ -96,24 +140,21 @@ void remote_control_timer() {
     }
 
     if (i2c_master_receive_buffer.start != i2c_master_receive_buffer.end) {
-        //TODO
+        read_message();
     }
+
 }
 
 
 void remote_control_handle_interrupt(uint32 gpio_status) {
-    bool left = gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_LEFT);
-    bool right = gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_RIGHT);
-    bool home = gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_HOME);
-
     uint32 time = system_get_time();
     int button = -1;
 
-    if (left) {
+    if (gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_LEFT)) {
         button = 0;
-    } else if (right) {
+    } else if (gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_RIGHT)) {
         button = 1;
-    } else if (home) {
+    } else if (gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_HOME)) {
         button = 2;
     }
 
@@ -124,16 +165,29 @@ void remote_control_handle_interrupt(uint32 gpio_status) {
 
         if (delta_time > INTERVAL_BUTTON * 1000) {
 
-            if (button == 0 && target_position > COMMAND_POSITION_MIN) {
-                target_position--;
-            } else if (button == 1 && target_position < COMMAND_POSITION_MAX) {
-                target_position++;
+            if (button == 0) {
+                if (target_position > COMMAND_POSITION_MIN) {
+                    target_position -= 10;
+                    set_error_led(false);
+                } else {
+                    set_error_led(true);
+                }
+            } else if (button == 1) {
+                if (target_position < COMMAND_POSITION_MAX) {
+                    target_position += 10;
+                    set_error_led(false);
+                } else {
+                    set_error_led(true);
+                }
             } else if (button == 2) {
                 request_home = true;
                 target_position = COMMAND_POSITION_MAX;
+                set_error_led(false);
             }
 
-            os_printf_plus("remote_control_handle_interrupt: l%d r%d h%d  pos%d\n", left, right, home, target_position);
+            set_ready_led();
+
+            os_printf_plus("remote_control_handle_interrupt: %d  pos%d\n", button, target_position);
         }
     }
 
