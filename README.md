@@ -25,4 +25,4 @@ esp8266_A GPIO15/D8 --> Led "Ready"    (through resistor)
 
 ## Explanation of the I²C protocol
 
-![alt text]https://github.com/DavidRisch/esp8266_i2c/blob/master/i2c_protocol.png?raw=true)
+![I2C Protocol](https://github.com/DavidRisch/esp8266_i2c/blob/master/i2c_protocol.png?raw=true)
