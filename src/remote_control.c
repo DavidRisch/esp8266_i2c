@@ -90,8 +90,6 @@ static void ICACHE_FLASH_ATTR send_message() {
 // read message from slave
 static void ICACHE_FLASH_ATTR read_message() {
     if (ring_buffer_length(&i2c_master_receive_buffer) >= 3) {
-        os_printf_plus("read_message: %d %d     %d\n", i2c_master_receive_buffer.start, i2c_master_receive_buffer.end,
-                       i2c_master_receive_buffer.buffer[0]);
 
         uint8 byte = ring_buffer_read_one_byte(&i2c_master_receive_buffer);
         if (byte != 0xFE) {

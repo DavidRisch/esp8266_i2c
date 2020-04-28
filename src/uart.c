@@ -8,6 +8,8 @@
 #include "pins.h"
 #include "ring_buffer.h"
 
+// #define UART_DEBUG
+
 // value of the current word
 uint8 uart_receive_binary_word = 0;
 
@@ -84,7 +86,9 @@ void uart_edge() {
         }
         receive_bit_state += bit_number;
         if (receive_bit_state > BIT_7) { // data word is complete
+#ifdef UART_DEBUG
             os_printf("uart_received byte: %c   %d\n", uart_receive_binary_word, uart_receive_binary_word);
+#endif
             ring_buffer_write_one_byte(&uart_receive_buffer, uart_receive_binary_word);
             receive_bit_state = BIT_STOP;
             // This relies on detecting the start of BIT_STOP. If the last byte of a transmission were to end with a 1,
@@ -94,8 +98,10 @@ void uart_edge() {
     } else if (receive_bit_state == BIT_STOP && previous_value) {
         receive_bit_state = BIT_START;
     } else {
+#ifdef UART_DEBUG
         os_printf_plus("uart_error\n");
         os_printf_plus("uart_edge %d  %d    %d\n", current_value, previous_value, time - edge_last_time);
+#endif
         receive_bit_state = BIT_START;
     }
 }

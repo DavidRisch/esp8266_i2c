@@ -40,6 +40,8 @@ static int timer_cycle = 0;
 
 static int i2c_master_wait_counter = 0;
 
+// #define I2C_MASTER_DEBUG
+
 void i2c_master_timer() {
     if (i2c_master_wait_counter > 0) {
         i2c_master_wait_counter--;
@@ -84,7 +86,9 @@ void i2c_master_timer() {
             case SEND_DATA:
                 if (bit_counter == 0) {
                     next_byte_to_send = ring_buffer_read_one_byte(&i2c_master_send_buffer);
+#ifdef I2C_MASTER_DEBUG
                     os_printf_plus("i2c_master sending byte: %c  %d\n", next_byte_to_send, next_byte_to_send);
+#endif
                 }
                 pin_i2c_write(PIN_I2C_SDA, (next_byte_to_send & (1 << (7 - bit_counter))) > 0);
                 bit_counter++;
@@ -106,13 +110,17 @@ void i2c_master_timer() {
                 }
                 break;
             case SEND_ACKNOWLEDGE:
+#ifdef I2C_MASTER_DEBUG
                 os_printf_plus("i2c_master sending ACK\n");
+#endif
                 pin_i2c_write(PIN_I2C_SDA, 0);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
                 break;
             case SEND_NO_ACKNOWLEDGE:
+#ifdef I2C_MASTER_DEBUG
                 os_printf_plus("i2c_master sending NACK\n");
+#endif
                 pin_i2c_write(PIN_I2C_SDA, 1);
                 i2c_master_state = next_state;
                 wait_one_tick = true;
@@ -141,10 +149,14 @@ void i2c_master_timer() {
                 case WAIT_FOR_ACKNOWLEDGE: {
                     int acknowledge_bit = pin_i2c_read(PIN_I2C_SDA);
                     if (acknowledge_bit == 0 || DEBUG_IGNORE_ACKNOWLEDGE_BIT) {
+#ifdef I2C_MASTER_DEBUG
                         os_printf_plus("i2c_master received ACK\n");
+#endif
                         i2c_master_state = next_state;
                     } else {
+#ifdef I2C_MASTER_DEBUG
                         os_printf_plus("i2c_master received NACK\n");
+#endif
                         i2c_master_state = STOP; //abort transmission
                     }
                 }
@@ -155,8 +167,10 @@ void i2c_master_timer() {
                     // os_printf_plus("i2c_master received bit %d: %d\n", bit_counter, received_bit);
                     bit_counter++;
                     if (bit_counter == 8) {
+#ifdef I2C_MASTER_DEBUG
                         os_printf_plus("i2c_master received byte: %d  %c\n", current_receiving_byte,
                                        current_receiving_byte);
+#endif
                         bit_counter = 0;
                         ring_buffer_write_one_byte(&i2c_master_receive_buffer, current_receiving_byte);
                         receive_counter--;
