@@ -36,8 +36,8 @@ A message starts with a start symbol and ends with a stop symbol.
 3. Read-Write-Bit
 4. Acknowledgement bit
 5. Data frame
-6. Acknowledgement bit
-.
-. (Step 5 and 6 can repeat)
-.
+6. Acknowledgement bit  
+.  
+. (Step 5 and 6 can repeat)  
+.  
 7. Stop symbol
