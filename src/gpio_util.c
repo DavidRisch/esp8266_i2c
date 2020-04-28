@@ -26,7 +26,6 @@ int pin_get_current_value(int pin) {
     return (GPIO_REG_READ(GPIO_OUT_ADDRESS) & (1u << pin)) > 0;
 }
 
-
 // pin must be input
 int pin_read_value(int pin) {
     return (GPIO_REG_READ(GPIO_IN_ADDRESS) & (1u << pin)) > 0;
@@ -40,11 +39,11 @@ float pin_read_analog() {
 // write with open drain + pull-up
 void pin_i2c_write(volatile uint32 pin, int value) {
     if (value) {
-        // use pull-up to write a 1
+        // use pull-up to write HIGH (1)
         pin_set_input(pin);
         PIN_PULLUP_EN(io_mux_address[pin]);
     } else {
-        // write 0
+        // write LOW (0)
         pin_set_output(pin);
         pin_set_value(pin, 0);
     }

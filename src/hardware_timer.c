@@ -23,7 +23,6 @@ void hardware_timer_interrupt(void *arg) {
         remote_receiver_timer();
         uart_timer();
     }
-
 }
 
 void ICACHE_FLASH_ATTR hardware_timer_init() {
@@ -34,10 +33,9 @@ void ICACHE_FLASH_ATTR hardware_timer_init() {
 }
 
 void noop(void *arg) {
-    // Do nothing
+    // do nothing
 }
 
 void hardware_timer_stop() {
     hw_timer_set_func((void (*)(void)) noop);
 }
-

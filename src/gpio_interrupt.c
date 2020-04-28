@@ -26,7 +26,6 @@ void gpio_interrupt_edge() {
 
     uint32 gpio_values = GPIO_REG_READ(GPIO_IN_ADDRESS);
 
-
     int pin;
     for (pin = GPIO_ID_PIN0; pin < GPIO_LAST_REGISTER_ID; ++pin) {
         if (gpio_status & (1u << pin)) {
@@ -55,19 +54,19 @@ void gpio_interrupt_edge() {
     }
 
 
-    // uart
+    // interrupt handling for uart
     if (!remote_is_control && gpio_status & (1 << PIN_UART_IN)) {
         uart_edge();
     }
 
-    // i2c
+    // interrupt handling for i2c
     if (gpio_status & (1 << PIN_I2C_SDA) || gpio_status & (1 << PIN_I2C_SCL)) {
         if (!i2c_is_master) {
             i2c_slave_handle_interrupt(gpio_status, gpio_values);
         }
     }
 
-    // control
+    // interrupt handling for control buttons
     if (remote_is_control &&
         (gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_LEFT) || gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_RIGHT) ||
          gpio_status & (1 << PIN_REMOTE_CONTROL_BUTTON_HOME))) {
@@ -75,32 +74,34 @@ void gpio_interrupt_edge() {
     }
 }
 
+// enables interrupt for pin and saves interrupt state
 void pin_enable_interrupt(int pin, GPIO_INT_TYPE state) {
     pin_interrupt_states[pin] = state;
     gpio_pin_intr_state_set(GPIO_ID_PIN(pin), state);
 }
 
+// disables interrupt for pin
 void pin_disable_interrupt(int pin) {
     pin_interrupt_states[pin] = GPIO_PIN_INTR_DISABLE;
     gpio_pin_intr_state_set(GPIO_ID_PIN(pin), GPIO_PIN_INTR_DISABLE);
 }
 
 void ICACHE_FLASH_ATTR gpio_interrupt_init() {
+    // disabling all interrupts
     int i;
     for (i = GPIO_ID_PIN0; i < GPIO_LAST_REGISTER_ID; ++i) {
         pin_disable_interrupt(i);
     }
 
-    // uart
+    // init for uart
     pin_enable_interrupt(GPIO_ID_PIN(PIN_UART_IN), GPIO_PIN_INTR_ANYEDGE);
 
-    // i2c
-    if (i2c_is_master) {
-        // init for master
-    } else {
+    // init for i2c slave
+    if (!i2c_is_master) {
         pin_enable_interrupt(GPIO_ID_PIN(PIN_I2C_SDA), GPIO_PIN_INTR_NEGEDGE);
     }
 
+    // init for control buttons
     if (remote_is_control) {
         pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_BUTTON_LEFT), GPIO_PIN_INTR_POSEDGE);
         pin_enable_interrupt(GPIO_ID_PIN(PIN_REMOTE_CONTROL_BUTTON_RIGHT), GPIO_PIN_INTR_POSEDGE);
@@ -108,10 +109,12 @@ void ICACHE_FLASH_ATTR gpio_interrupt_init() {
     }
 
 
+    // multiplexing callback function for interrupts
     ETS_GPIO_INTR_ATTACH(&gpio_interrupt_edge, 0);
 
     // workaround, the function exists in the compiled library but is missing from the header
     void ets_isr_unmask(uint32 unmask);
+    // enable interrupts
     ETS_GPIO_INTR_ENABLE();
     ETS_INTR_UNLOCK();
 }

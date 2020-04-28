@@ -16,6 +16,7 @@ void remote_receiver_init() {
 
 }
 
+// read from printer
 void read_uart_input() {
     // example: X:0.00 Y:0.00 Z:0.00 E:0.00 Count ...
     if (ring_buffer_length(&uart_receive_buffer) > 45) { // no response to M114 is ever shorter than 45 chars
@@ -50,6 +51,7 @@ void read_uart_input() {
 
         os_printf_plus("read_uart_input number: %d | %s\n", position, x_pos_str);
 
+        // sends received message to master
         ring_buffer_clear(&i2c_slave_send_buffer);
         ring_buffer_write_one_byte(&i2c_slave_send_buffer, 0xfe);
         ring_buffer_write_one_byte(&i2c_slave_send_buffer, position);
@@ -59,9 +61,8 @@ void read_uart_input() {
     }
 }
 
-
 void remote_receiver_timer() {
-
+    // check if master sent data
     if (ring_buffer_length(&i2c_slave_receive_buffer) >= 4) {
         uint8 byte = ring_buffer_read_one_byte(&i2c_slave_receive_buffer);
         if (byte != 0xFF) {
@@ -74,7 +75,7 @@ void remote_receiver_timer() {
         char printer_message[50];
         printer_message[0] = '\0';
 
-
+        // assemble printer message
         switch (command) {
             case COMMAND_POSITION: {
                 uint8 position = ring_buffer_read_one_byte(&i2c_slave_receive_buffer);
@@ -112,6 +113,7 @@ void remote_receiver_timer() {
             return;
         }
 
+        // send command to printer
         ring_buffer_write(&uart_send_buffer, (uint8 *) printer_message);
     }
 

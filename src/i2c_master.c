@@ -7,8 +7,16 @@
 #define DEBUG_IGNORE_ACKNOWLEDGE_BIT true
 
 enum state {
-    IDLE, START, STOP, SEND_ADDRESS, SEND_DATA,
-    RECEIVE_DATA, SEND_READ_WRITE_BIT, WAIT_FOR_ACKNOWLEDGE, SEND_ACKNOWLEDGE, SEND_NO_ACKNOWLEDGE
+    IDLE,
+    START,
+    STOP,
+    SEND_ADDRESS,
+    SEND_DATA,
+    RECEIVE_DATA,
+    SEND_READ_WRITE_BIT,
+    WAIT_FOR_ACKNOWLEDGE,
+    SEND_ACKNOWLEDGE,
+    SEND_NO_ACKNOWLEDGE
 };
 enum state i2c_master_state = IDLE; //what the master is currently doing
 static enum state next_state = IDLE; //what the master is doing next (only used after some states)
@@ -42,11 +50,13 @@ void i2c_master_timer() {
     } else if (timer_cycle == 1) { //set SDA to send data
         switch (i2c_master_state) {
             case IDLE:
+                // checks if send buffer is not empty
                 if (i2c_master_send_buffer.end != i2c_master_send_buffer.start || receive_counter > 0) {
                     i2c_master_state = START;
                 }
                 break;
             case SEND_ADDRESS:
+                // writes current bit of address at each clock cycle
                 pin_i2c_write(PIN_I2C_SDA, (address & (1 << (6 - bit_counter))) > 0);
                 bit_counter++;
                 if (bit_counter == 7) {
@@ -68,6 +78,7 @@ void i2c_master_timer() {
                 }
                 break;
             case WAIT_FOR_ACKNOWLEDGE:
+                // preperation for acknowledge from slave
                 pin_i2c_write(PIN_I2C_SDA, 1);
                 break;
             case SEND_DATA:

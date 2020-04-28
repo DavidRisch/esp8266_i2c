@@ -42,6 +42,7 @@ static int write_to_master; // true if sending data to master, false if receivin
 unsigned int i2c_edge_last_time = 0;
 #endif
 
+// function for interrupt handling
 void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
 
     bool sda_value = gpio_values & (1 << PIN_I2C_SDA);

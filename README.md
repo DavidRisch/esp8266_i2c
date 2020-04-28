@@ -45,7 +45,7 @@ LED "Ready" (through resistor):
 ## Explanation of the I2C protocol
 I²C sends data in different messages. One message can consist of multiple data frames, each consisting of exactly one byte / 8 bit.  
 Each data frame is followed by an acknowledgement (ACK) bit.  
-A 7-Bit long address is sent at begin of each message to indicate which device is being communicated to.  
+A 7-Bit long address is sent at the beginning of each message to indicate which device is being communicated to.  
 A message starts with a start symbol and ends with a stop symbol.  
 
 ![I2C Protocol](https://github.com/DavidRisch/esp8266_i2c/blob/master/i2c_protocol.png?raw=true)

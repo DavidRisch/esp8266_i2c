@@ -27,8 +27,10 @@ void set_error_led(bool state) {
     pin_set_value(PIN_REMOTE_CONTROL_LED_ERROR, state);
 }
 
+// send message to slave
 static void ICACHE_FLASH_ATTR send_message() {
 
+    // sending home command
     if (request_home) {
         os_printf("remote_control COMMAND_HOME\n");
         request_home = !request_home;
@@ -39,6 +41,7 @@ static void ICACHE_FLASH_ATTR send_message() {
         return;
     }
 
+    // sending command to move towards target position
     if (target_position != last_sent_position) {
         os_printf("remote_control COMMAND_POSITION: %d\n", target_position);
         last_sent_position = target_position;
@@ -51,6 +54,7 @@ static void ICACHE_FLASH_ATTR send_message() {
 
     uint32 time = system_get_time();
 
+    // sending speed
     if ((time - last_speed_command) > 10000 * 1000) {
         float speed = pin_read_analog();
         os_printf("remote_control COMMAND_SPEED: %d.%d\n", (int) (speed / 1),
@@ -63,7 +67,7 @@ static void ICACHE_FLASH_ATTR send_message() {
         i2c_master_write_byte(0x00);
     }
 
-
+    // requesting status
     if ((time - last_status_command) > 1000 * 1000) {
         os_printf("remote_control COMMAND_STATUS\n");
         last_status_command = time;
@@ -74,14 +78,16 @@ static void ICACHE_FLASH_ATTR send_message() {
         read_this_cycle = false;
     }
 
+    // reading status
     if (!read_this_cycle && (time - last_status_command) > 500 * 1000) {
         os_printf("remote_control READ\n");
         i2c_master_read(3);
         read_this_cycle = true;
     }
-
 }
 
+
+// read message from slave
 static void ICACHE_FLASH_ATTR read_message() {
     if (ring_buffer_length(&i2c_master_receive_buffer) >= 3) {
         os_printf_plus("read_message: %d %d     %d\n", i2c_master_receive_buffer.start, i2c_master_receive_buffer.end,
@@ -110,6 +116,7 @@ static void ICACHE_FLASH_ATTR read_message() {
 void ICACHE_FLASH_ATTR remote_control_init() {
     os_printf_plus("remote_control_init\n");
 
+    // setting buttons as input
     pin_set_input(PIN_REMOTE_CONTROL_BUTTON_LEFT);
     PIN_PULLUP_EN(io_mux_address[PIN_REMOTE_CONTROL_BUTTON_LEFT]);
     pin_set_input(PIN_REMOTE_CONTROL_BUTTON_RIGHT);
@@ -117,11 +124,11 @@ void ICACHE_FLASH_ATTR remote_control_init() {
     pin_set_input(PIN_REMOTE_CONTROL_BUTTON_HOME);
     PIN_PULLUP_EN(io_mux_address[PIN_REMOTE_CONTROL_BUTTON_HOME]);
 
+    // setting leds as output
     pin_set_output(PIN_REMOTE_CONTROL_LED_READY);
     pin_set_value(PIN_REMOTE_CONTROL_LED_READY, 1);
     pin_set_output(PIN_REMOTE_CONTROL_LED_ERROR);
     pin_set_value(PIN_REMOTE_CONTROL_LED_ERROR, 1);
-
 
     uint32 time = system_get_time();
     int i;
@@ -134,7 +141,6 @@ void ICACHE_FLASH_ATTR remote_control_init() {
 }
 
 void remote_control_timer() {
-
     if (i2c_master_send_buffer.start == i2c_master_send_buffer.end) {
         send_message();
     }
@@ -142,10 +148,9 @@ void remote_control_timer() {
     if (i2c_master_receive_buffer.start != i2c_master_receive_buffer.end) {
         read_message();
     }
-
 }
 
-
+// handle button interrupts
 void remote_control_handle_interrupt(uint32 gpio_status) {
     uint32 time = system_get_time();
     int button = -1;
@@ -190,7 +195,4 @@ void remote_control_handle_interrupt(uint32 gpio_status) {
             os_printf_plus("remote_control_handle_interrupt: %d  pos%d\n", button, target_position);
         }
     }
-
-
 }
-
