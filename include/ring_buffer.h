@@ -26,4 +26,6 @@ void ring_buffer_read_line(ring_buffer_t *ring_buffer, uint8 *output);
 
 int ring_buffer_length(ring_buffer_t *ring_buffer);
 
+void ring_buffer_clear(ring_buffer_t *ring_buffer);
+
 #endif //ESP8266_I2C_RING_BUFFER_H

@@ -39,7 +39,7 @@ static int addressed; // address which master wants to write to
 static int write_to_master; // true if sending data to master, false if receiving
 
 #ifdef I2C_SLAVE_DETAILED_DEBUG
-    unsigned int i2c_edge_last_time = 0;
+unsigned int i2c_edge_last_time = 0;
 #endif
 
 void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {

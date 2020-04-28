@@ -141,7 +141,7 @@ void i2c_master_timer() {
                 case RECEIVE_DATA: {
                     int received_bit = pin_i2c_read(PIN_I2C_SDA);
                     current_receiving_byte = current_receiving_byte | (received_bit << (7 - bit_counter));
-                    os_printf_plus("i2c_master received bit %d: %d\n", bit_counter, received_bit);
+                    // os_printf_plus("i2c_master received bit %d: %d\n", bit_counter, received_bit);
                     bit_counter++;
                     if (bit_counter == 8) {
                         os_printf_plus("i2c_master received byte: %d  %c\n", current_receiving_byte,
@@ -185,13 +185,13 @@ void i2c_master_read(int length) {
 
 //writes to slave
 void ICACHE_FLASH_ATTR i2c_master_write(const uint8 *data) {
-    os_printf("i2c_master_write: %s\n", data);
+    // os_printf("i2c_master_write: %s\n", data);
     ring_buffer_write(&i2c_master_send_buffer, data);
 }
 
 //writes to slave
 void ICACHE_FLASH_ATTR i2c_master_write_byte(const uint8 data) {
-    os_printf("i2c_master_write_byte: %d %c\n", data, data);
+    // os_printf("i2c_master_write_byte: %d %c\n", data, data);
     ring_buffer_write_one_byte(&i2c_master_send_buffer, data);
 }
 

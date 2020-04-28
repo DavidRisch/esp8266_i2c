@@ -18,6 +18,17 @@ uint32 last_speed_command = 0;
 uint32 button_last_times[2];
 
 static void ICACHE_FLASH_ATTR send_message() {
+
+    if (request_home) {
+        os_printf("remote_control COMMAND_HOME\n");
+        request_home = !request_home;
+        i2c_master_write_byte(0xFF);
+        i2c_master_write_byte(COMMAND_HOME);
+        i2c_master_write_byte(0x00);
+        i2c_master_write_byte(0x00);
+        return;
+    }
+
     if (target_position != last_sent_position) {
         os_printf("remote_control COMMAND_POSITION: %d\n", target_position);
         last_sent_position = target_position;
@@ -28,17 +39,8 @@ static void ICACHE_FLASH_ATTR send_message() {
         return;
     }
 
-    if (request_home) {
-        os_printf("remote_control COMMAND_HOME\n");
-        request_home = !request_home;
-        i2c_master_write_byte(0xFF);
-        i2c_master_write_byte(COMMAND_HOME);
-        i2c_master_write_byte(0x00);
-        return;
-    }
-
     uint32 time = system_get_time();
-
+/*
     if ((time - last_speed_command) > 10000 * 1000) {
         float speed = pin_read_analog();
         os_printf("remote_control COMMAND_SPEED: %d.%d\n", (int) (speed / 1),
@@ -50,12 +52,15 @@ static void ICACHE_FLASH_ATTR send_message() {
         i2c_master_write_byte(speed_byte);
         i2c_master_write_byte(0x00);
     }
+    */
 
-    if (false && (time - last_status_command) > 4000 * 1000) {
+    if ((time - last_status_command) > 8000 * 1000) {
         os_printf("remote_control COMMAND_STATUS\n");
+        //i2c_master_read(3);
         last_status_command = time;
         i2c_master_write_byte(0xFF);
         i2c_master_write_byte(COMMAND_STATUS);
+        i2c_master_write_byte(0x00);
         i2c_master_write_byte(0x00);
     }
 
@@ -125,6 +130,7 @@ void remote_control_handle_interrupt(uint32 gpio_status) {
                 target_position++;
             } else if (button == 2) {
                 request_home = true;
+                target_position = COMMAND_POSITION_MAX;
             }
 
             os_printf_plus("remote_control_handle_interrupt: l%d r%d h%d  pos%d\n", left, right, home, target_position);

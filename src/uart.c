@@ -30,34 +30,27 @@ void uart_timer() {
             // data bit
             bool value = (uart_send_buffer.buffer[uart_send_buffer.start] & (1 << (position - 1))) > 0;
             pin_set_value(PIN_UART_OUT, value);
+            uart_send_counter++;
         } else if (position == 9) {
             // stop bit
             pin_set_value(PIN_UART_OUT, 1);
+            uart_send_counter++;
         } else if (position >= 20) {
             // end of frame
             uart_send_buffer.start++;
             uart_receive_buffer.start %= RING_BUFFER_LENGTH;
-            uart_send_counter = -1;
-
+            uart_send_counter = 0;
+        } else {
+            uart_send_counter++;
         }
-        uart_send_counter++;
     } else if (uart_send_counter == 0 && uart_send_buffer.end != uart_send_buffer.start) {
         // start bit
-        os_printf("uart_timer start\n");
         pin_set_value(PIN_UART_OUT, 0);
         uart_send_counter = 1;
     }
-
-    if (uart_receive_buffer.start != uart_receive_buffer.end &&
-        uart_receive_buffer.buffer[uart_receive_buffer.end - 1] == '\n') {
-        ring_buffer_read_line(&uart_receive_buffer, (uint8 *) uart_output_str);
-        if (uart_output_str[0] != '\0') {
-            os_printf("uart_received: %s\n", uart_output_str);
-        }
-    }
 }
 
-unsigned int edge_last_time = 0;
+uint32 edge_last_time = 0;
 enum bit_types {
     BIT_START, BIT_0, BIT_1, BIT_2, BIT_3, BIT_4, BIT_5, BIT_6, BIT_7, BIT_STOP
 };
@@ -69,11 +62,12 @@ void uart_edge() {
     // this function is triggered after an edge, the value before th edge must be the inverse of current_value
     bool previous_value = !current_value;
 
-    os_printf("uart_edge current_value: %d\n", current_value);
-
-    unsigned int time = system_get_time();
+    uint32 time = system_get_time();
     // number of bits since the last edge
     int bit_number = (time - edge_last_time + UART_US_PER_BIT / 2) / UART_US_PER_BIT;
+
+    //os_printf_plus("uart_edge %d  %d    %d\n",current_value,previous_value,time - edge_last_time);
+
     edge_last_time = time;
 
     if (receive_bit_state >= BIT_START && receive_bit_state <= BIT_7) {
@@ -103,6 +97,7 @@ void uart_edge() {
         receive_bit_state = BIT_START;
     } else {
         os_printf_plus("uart_error\n");
+        os_printf_plus("uart_edge %d  %d    %d\n", current_value, previous_value, time - edge_last_time);
         receive_bit_state = BIT_START;
     }
 }
@@ -112,7 +107,7 @@ void my_uart_init() {
     pin_set_output(PIN_UART_OUT);
     pin_set_value(PIN_UART_OUT, 1);
 
-    ring_buffer_write(&uart_send_buffer, (uint8 *) "\nM114\nM105\nM105\nM105\n");
+    // ring_buffer_write(&uart_send_buffer, (uint8 *) "\nM114\nM105\n");
 }
 
 
