@@ -3,9 +3,9 @@
 1. [Chip](#chip)
 2. [Electrical connections](#electrical-connections)
     1. [UART](#uart)
-    2. [I²C](#i2c)
+    2. [I2C](#i2c)
     3. [User interface](#user-interface)
-3. [Explanation of the I²C protocol](#explanation-of-the-i2c-protocol)
+3. [Explanation of the I2C protocol](#explanation-of-the-i2c-protocol)
     1. [Differences between this implementation and the actual protocol](#differences-between-this-implementation-and-the-actual-protocol)
 4. [Example Setup](#example-setup)
 
@@ -13,7 +13,7 @@
 The software is written for the **ESP8266** microchip, produced by *Espressif Systems*.
 
 More information about how to control the hardware of a ESP8266: [Technical Reference](https://www.espressif.com/sites/default/files/documentation/esp8266-technical_reference_en.pdf)  
-Specification of the chip: [Datasheet](https://www.espressif.com/sites/default/files/documentation/esp8266-technical_reference_en.pdf)  
+Specification of the chip: [Datasheet](https://www.espressif.com/sites/default/files/documentation/0a-esp8266ex_datasheet_en.pdf)  
 
 ## Electrical connections
 ### UART
@@ -22,7 +22,7 @@ Atmega2560 D17/TX2 5V (no converter required >3.0V is read as high):
 Atmega2560 D16/RX2 5V (with voltage divider to reduce below 3.6V):  
 &nbsp;&nbsp;&nbsp;&nbsp;`esp8266_B GPIO05/D1 3.3V`  
 
-### I²C
+### I2C
 SCL:  
 &nbsp;&nbsp;&nbsp;&nbsp;`esp8266_A GPIO14/D5 <-> esp8266_B GPIO14/D5`  
 SDA:  
@@ -42,7 +42,7 @@ LED "Ready" (through resistor):
 LED "Ready" (through resistor):  
 &nbsp;&nbsp;&nbsp;&nbsp;`esp8266_A GPIO15/D8`  
 
-## Explanation of the I²C protocol
+## Explanation of the I2C protocol
 I²C sends data in different messages. One message can consist of multiple data frames, each consisting of exactly one byte / 8 bit.  
 Each data frame is followed by an acknowledgement (ACK) bit.  
 A 7-Bit long address is sent at begin of each message to indicate which device is being communicated to.  
