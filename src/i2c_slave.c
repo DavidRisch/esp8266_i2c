@@ -218,9 +218,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
 #ifdef I2C_SLAVE_DETAILED_DEBUG
             os_printf_plus("\t\t\t\t\tWRITE_ACKNOWLEDGE_START\n");
 #endif
-#ifdef I2C_SLAVE_DEBUG
             pin_i2c_write(PIN_I2C_SDA, 0);
-#endif
 
             i2c_slave_state = WRITE_ACKNOWLEDGE_END;
 
@@ -230,9 +228,7 @@ void i2c_slave_handle_interrupt(uint32 gpio_status, uint32 gpio_values) {
 #ifdef I2C_SLAVE_DETAILED_DEBUG
             os_printf_plus("\t\t\t\t\tWRITE_ACKNOWLEDGE_END\n");
 #endif
-#ifdef I2C_SLAVE_DEBUG
             pin_i2c_write(PIN_I2C_SDA, 1);
-#endif
 
             i2c_slave_state = DATA;
             if (write_to_master) {
