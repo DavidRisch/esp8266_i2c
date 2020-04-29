@@ -38,7 +38,7 @@ Button "Left" (normally open, connected to GND):
 &nbsp;&nbsp;&nbsp;&nbsp;`esp8266_A GPIO04/D2`  
 Button "Home" (normally open, connected to GND):  
 &nbsp;&nbsp;&nbsp;&nbsp;`esp8266_A GPIO00/D3`  
-LED "Ready" (through resistor):  
+LED "Error" (through resistor):  
 &nbsp;&nbsp;&nbsp;&nbsp;`esp8266_A GPIO13/D7`  
 LED "Ready" (through resistor):  
 &nbsp;&nbsp;&nbsp;&nbsp;`esp8266_A GPIO15/D8`  

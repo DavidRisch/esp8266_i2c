@@ -19,7 +19,7 @@ uint32 last_status_command = 0;
 uint32 last_speed_command = 0;
 bool read_this_cycle = false;
 
-uint32 button_last_times[2];
+uint32 button_last_times[3];
 
 void set_ready_led() {
     pin_set_value(PIN_REMOTE_CONTROL_LED_READY, target_position == received_position);
@@ -126,13 +126,11 @@ void ICACHE_FLASH_ATTR remote_control_init() {
 
     // setting leds as output
     pin_set_output(PIN_REMOTE_CONTROL_LED_READY);
-    pin_set_value(PIN_REMOTE_CONTROL_LED_READY, 1);
     pin_set_output(PIN_REMOTE_CONTROL_LED_ERROR);
-    pin_set_value(PIN_REMOTE_CONTROL_LED_ERROR, 1);
 
     uint32 time = system_get_time();
     int i;
-    for (i = 0; i < 2; i++) {
+    for (i = 0; i < 3; i++) {
         button_last_times[i] = time;
     }
 
@@ -189,6 +187,8 @@ void remote_control_handle_interrupt(uint32 gpio_status) {
                 target_position = COMMAND_POSITION_MAX;
                 set_error_led(false);
             }
+
+            os_printf_plus("============================================================ %d\n", button);
 
             set_ready_led();
 

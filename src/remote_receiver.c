@@ -55,7 +55,7 @@ void read_uart_input() {
         x_pos_str[i] = '\0';
         int position = atoi(x_pos_str);
 
-        os_printf_plus("read_uart_input number: %d | %s\n", position, x_pos_str);
+        os_printf_plus("read_uart_input number: %d\n", position);
 
         // sends received message to master
         ring_buffer_clear(&i2c_slave_send_buffer);
