@@ -5,6 +5,7 @@
     1. [UART](#uart)
     2. [I2C](#i2c)
     3. [User interface](#user-interface)
+    4. [Role select](#role-select)
 3. [Explanation of the I2C protocol](#explanation-of-the-i2c-protocol)
     1. [Differences between this implementation and the actual protocol](#differences-between-this-implementation-and-the-actual-protocol)
 4. [Example Setup](#example-setup)
