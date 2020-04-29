@@ -50,7 +50,7 @@ int ring_buffer_length(ring_buffer_t *ring_buffer) {
     if (ring_buffer->end - ring_buffer->start >= 0) {
         return ring_buffer->end - ring_buffer->start;
     } else {
-        return RING_BUFFER_LENGTH - ring_buffer->end - ring_buffer->start;
+        return RING_BUFFER_LENGTH - ring_buffer->end + ring_buffer->start;
     }
 }
 

@@ -18,12 +18,13 @@ void remote_receiver_init() {
 
 // read from printer
 void read_uart_input() {
-    // example: X:0.00 Y:0.00 Z:0.00 E:0.00 Count ...
-    if (ring_buffer_length(&uart_receive_buffer) > 45) { // no response to M114 is ever shorter than 45 chars
+    // example: X:0.00 Y:0.00 Z:0.00 E:0.00 Count X: 0.0 ...
+    if (ring_buffer_length(&uart_receive_buffer) > 10) {
+
         uint8 input_byte = ring_buffer_read_one_byte(&uart_receive_buffer);
         while (input_byte != 'X') {
             input_byte = ring_buffer_read_one_byte(&uart_receive_buffer);
-            if (uart_receive_buffer.start == uart_receive_buffer.end) {
+            if (ring_buffer_length(&uart_receive_buffer) < 8) {
                 return;
             }
         }
@@ -41,8 +42,13 @@ void read_uart_input() {
             } else if (input_byte == '.') {
                 break;
             } else {
-                os_printf_plus("read_uart_input number was not followed by '.', got %d 0x%x %c\n",
-                               input_byte, input_byte, input_byte);
+                if (i == 0 && input_byte == ' ') {
+                    // This is reached when reaching 'X: 0.0' (some stepper motor value) which is not relevant
+                } else {
+                    x_pos_str[i] = '\0';
+                    os_printf_plus("read_uart_input number was not followed by '.', got %d 0x%x %c   '%s'\n",
+                                   input_byte, input_byte, input_byte, x_pos_str);
+                }
                 return;
             }
         }
@@ -56,8 +62,6 @@ void read_uart_input() {
         ring_buffer_write_one_byte(&i2c_slave_send_buffer, 0xfe);
         ring_buffer_write_one_byte(&i2c_slave_send_buffer, position);
         ring_buffer_write_one_byte(&i2c_slave_send_buffer, 0xfd);
-
-        ring_buffer_clear(&uart_receive_buffer);
     }
 }
 
@@ -100,7 +104,6 @@ void remote_receiver_timer() {
                 ring_buffer_read_one_byte(&i2c_slave_receive_buffer);
                 os_printf_plus("remote_receiver_timer: status\n");
                 os_sprintf(printer_message, "M114\n");
-                ring_buffer_clear(&uart_receive_buffer);
                 break;
             default:
                 os_printf_plus("remote_receiver_timer: unknown command: %d\n", command);

@@ -47,7 +47,7 @@ void ICACHE_FLASH_ATTR user_init() {
 
     system_timer_reinit();
 
-    uart_init(BIT_RATE_115200, BIT_RATE_9600);
+    uart_init(BIT_RATE_230400, BIT_RATE_9600);
 
     gpio_util_init();
 

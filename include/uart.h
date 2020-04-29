@@ -4,7 +4,7 @@
 #include "ring_buffer.h"
 
 // baudrate for sending and receiving
-#define UART_BAUDRATE 1000
+#define UART_BAUDRATE 4000
 #define UART_US_PER_BIT (1000000 / UART_BAUDRATE)
 
 ring_buffer_t uart_receive_buffer;

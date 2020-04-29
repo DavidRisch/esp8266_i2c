@@ -7,6 +7,8 @@
 #include "commands.h"
 
 #define INTERVAL_BUTTON 200 // in ms
+#define INTERVAL_STATUS 300 // in ms
+#define INTERVAL_SPEED 350 // in ms
 
 static int target_position = 100;
 static int last_sent_position = 0;
@@ -55,7 +57,7 @@ static void ICACHE_FLASH_ATTR send_message() {
     uint32 time = system_get_time();
 
     // sending speed
-    if ((time - last_speed_command) > 10000 * 1000) {
+    if ((time - last_speed_command) > INTERVAL_SPEED * 1000) {
         float speed = pin_read_analog();
         os_printf("remote_control COMMAND_SPEED: %d.%d\n", (int) (speed / 1),
                   ((int) (speed * 100)) % 100);
@@ -68,7 +70,7 @@ static void ICACHE_FLASH_ATTR send_message() {
     }
 
     // requesting status
-    if ((time - last_status_command) > 1000 * 1000) {
+    if ((time - last_status_command) > INTERVAL_STATUS * 1000) {
         os_printf("remote_control COMMAND_STATUS\n");
         last_status_command = time;
         i2c_master_write_byte(0xFF);
@@ -79,7 +81,7 @@ static void ICACHE_FLASH_ATTR send_message() {
     }
 
     // reading status
-    if (!read_this_cycle && (time - last_status_command) > 500 * 1000) {
+    if (!read_this_cycle && (time - last_status_command) > INTERVAL_STATUS / 2 * 1000) {
         os_printf("remote_control READ\n");
         i2c_master_read(3);
         read_this_cycle = true;

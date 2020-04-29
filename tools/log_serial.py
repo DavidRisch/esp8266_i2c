@@ -7,10 +7,10 @@ import serial
 dev = '/dev/ttyUSB0'
 if (len(sys.argv) >= 2):
     dev = sys.argv[1]
-baudrate = 115200
+baudrate = 230400
 print("listening on", dev, "at", baudrate)
 
-with serial.Serial(dev, 115200) as ser:
+with serial.Serial(dev, baudrate) as ser:
     while 1:
         val = ord(ser.read())
         if val in [ord("\n"), ord("\r"), ord("\t")] or (ord(" ") <= val <= ord("~")):
