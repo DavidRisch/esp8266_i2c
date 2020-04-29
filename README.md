@@ -42,6 +42,15 @@ LED "Ready" (through resistor):
 LED "Ready" (through resistor):  
 &nbsp;&nbsp;&nbsp;&nbsp;`esp8266_A GPIO15/D8`  
 
+### Role select
+Role (master/slave) is determined by reading `D7` during boot. This allows both microcontrollers to be flashed with identical software.
+
+GND (reading: LOW):  
+&nbsp;&nbsp;&nbsp;&nbsp;`esp8266_B GPIO13/D7`  
+GND, through led and resistor (reading: HIGH due to internal pull-up):  
+&nbsp;&nbsp;&nbsp;&nbsp;`esp8266_A GPIO13/D7`  
+
+
 ## Explanation of the I2C protocol
 I²C sends data in different messages. One message can consist of multiple data frames, each consisting of exactly one byte / 8 bit.  
 Each data frame is followed by an acknowledgement (ACK) bit.  
